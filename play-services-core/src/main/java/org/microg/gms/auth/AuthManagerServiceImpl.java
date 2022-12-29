@@ -16,26 +16,22 @@
 
 package org.microg.gms.auth;
 
+import static android.accounts.AccountManager.KEY_ACCOUNTS;
+import static android.accounts.AccountManager.KEY_ACCOUNT_NAME;
+import static android.accounts.AccountManager.KEY_ACCOUNT_TYPE;
+import static android.accounts.AccountManager.KEY_AUTHTOKEN;
+import static android.accounts.AccountManager.KEY_CALLER_PID;
+
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.accounts.AuthenticatorException;
-import android.accounts.OperationCanceledException;
 import android.annotation.SuppressLint;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.RemoteException;
-import android.util.Base64;
 import android.util.Log;
 
-import androidx.core.app.NotificationCompat;
-
 import com.google.android.auth.IAuthManagerService;
-import com.mgoogle.android.gms.R;
 import com.google.android.gms.auth.AccountChangeEventsRequest;
 import com.google.android.gms.auth.AccountChangeEventsResponse;
 import com.google.android.gms.auth.GetHubTokenInternalResponse;
@@ -52,29 +48,16 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static android.accounts.AccountManager.KEY_ACCOUNTS;
-import static android.accounts.AccountManager.KEY_ACCOUNT_NAME;
-import static android.accounts.AccountManager.KEY_ACCOUNT_TYPE;
-import static android.accounts.AccountManager.KEY_AUTHTOKEN;
-import static android.accounts.AccountManager.KEY_CALLER_PID;
-
 public class AuthManagerServiceImpl extends IAuthManagerService.Stub {
     private static final String TAG = "GmsAuthManagerSvc";
 
     public static final String KEY_ACCOUNT_FEATURES = "account_features";
-    public static final String KEY_AUTHORITY = "authority";
-    public static final String KEY_CALLBACK_INTENT = "callback_intent";
     public static final String KEY_CALLER_UID = "callerUid";
     public static final String KEY_ANDROID_PACKAGE_NAME = "androidPackageName";
     public static final String KEY_CLIENT_PACKAGE_NAME = "clientPackageName";
     public static final String KEY_HANDLE_NOTIFICATION = "handle_notification";
-    public static final String KEY_REQUEST_ACTIONS = "request_visible_actions";
-    public static final String KEY_REQUEST_VISIBLE_ACTIVITIES = "request_visible_actions";
-    public static final String KEY_SUPPRESS_PROGRESS_SCREEN = "suppressProgressScreen";
-    public static final String KEY_SYNC_EXTRAS = "sync_extras";
 
     public static final String KEY_ERROR = "Error";
-    public static final String KEY_USER_RECOVERY_INTENT = "userRecoveryIntent";
 
     private final Context context;
 
@@ -90,19 +73,11 @@ public class AuthManagerServiceImpl extends IAuthManagerService.Stub {
     private List<Scope> getScopes(String scope) {
         if (!scope.startsWith("oauth2:")) return null;
         String[] strings = scope.substring(7).split(" ");
-        List<Scope> res = new ArrayList<Scope>();
+        List<Scope> res = new ArrayList<>();
         for (String string : strings) {
             res.add(new Scope(string));
         }
         return res;
-    }
-
-    private static CharSequence getPackageLabel(String packageName, PackageManager pm) {
-        try {
-            return pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0));
-        } catch (PackageManager.NameNotFoundException e) {
-            return packageName;
-        }
     }
 
     @Override
@@ -126,6 +101,7 @@ public class AuthManagerServiceImpl extends IAuthManagerService.Stub {
          */
         scope = scope.replace("https://www.googleapis.com/auth/identity.plus.page.impersonation ", "");
 
+        assert packageName != null;
         AuthManager authManager = new AuthManager(context, account.name, packageName, scope);
         Bundle result = new Bundle();
         result.putString(KEY_ACCOUNT_NAME, account.name);
@@ -179,19 +155,19 @@ public class AuthManagerServiceImpl extends IAuthManagerService.Stub {
     }
 
     @Override
-    public Bundle requestGoogleAccountsAccess(String packageName) throws RemoteException {
+    public Bundle requestGoogleAccountsAccess(String packageName) {
         Log.w(TAG, "Not implemented: requestGoogleAccountsAccess(" + packageName + ")");
         return null;
     }
 
     @Override
-    public int hasCapabilities(HasCababilitiesRequest request) throws RemoteException {
+    public int hasCapabilities(HasCababilitiesRequest request) {
         Log.w(TAG, "Not implemented: hasCapabilities(" + request.account + ", " + Arrays.toString(request.capabilities) + ")");
         return 1;
     }
 
     @Override
-    public GetHubTokenInternalResponse getHubToken(GetHubTokenRequest request, Bundle extras) throws RemoteException {
+    public GetHubTokenInternalResponse getHubToken(GetHubTokenRequest request, Bundle extras) {
         Log.w(TAG, "Not implemented: getHubToken()");
         return null;
     }
@@ -199,9 +175,6 @@ public class AuthManagerServiceImpl extends IAuthManagerService.Stub {
     @Override
     @SuppressLint("MissingPermission") // Workaround bug in Android Linter
     public Bundle clearToken(String token, Bundle extras) {
-        String packageName = extras.getString(KEY_ANDROID_PACKAGE_NAME);
-        if (packageName == null) packageName = extras.getString(KEY_CLIENT_PACKAGE_NAME);
-        packageName = PackageUtils.getAndCheckCallingPackage(context, packageName, extras.getInt(KEY_CALLER_UID, 0), extras.getInt(KEY_CALLER_PID, 0));
 
         Log.d(TAG, "clearToken: token:" + token + " extras:" + extras);
         AccountManager.get(context).invalidateAuthToken(AuthConstants.DEFAULT_ACCOUNT_TYPE, token);

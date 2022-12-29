@@ -34,6 +34,9 @@ public class GoogleCertificatesQuery extends AutoSafeParcelable {
     @SafeParceled(3)
     private boolean allowNonRelease;
 
+    public GoogleCertificatesQuery() {
+    }
+
     public String getPackageName() {
         return packageName;
     }
@@ -43,7 +46,7 @@ public class GoogleCertificatesQuery extends AutoSafeParcelable {
             ICertData iCertData = null;
             if (certDataBinder instanceof CertData) {
                 certData = (CertData) certDataBinder;
-            } else if (certDataBinder instanceof IObjectWrapper) {
+            } else {
                 certData = ObjectWrapper.unwrapTyped((IObjectWrapper) certDataBinder, CertData.class);
                 if (certData == null) {
                     byte[] bytes = ObjectWrapper.unwrapTyped((IObjectWrapper) certDataBinder, byte[].class);
@@ -54,8 +57,6 @@ public class GoogleCertificatesQuery extends AutoSafeParcelable {
                 if (certData == null) {
                     iCertData = ObjectWrapper.unwrapTyped((IObjectWrapper) certDataBinder, ICertData.class);
                 }
-            } else if (certDataBinder instanceof ICertData) {
-                iCertData = (ICertData) certDataBinder;
             }
             if (iCertData != null) {
                 try {
@@ -71,5 +72,5 @@ public class GoogleCertificatesQuery extends AutoSafeParcelable {
         return certData;
     }
 
-    public static final Creator<GoogleCertificatesQuery> CREATOR = new AutoCreator<GoogleCertificatesQuery>(GoogleCertificatesQuery.class);
+    public static final Creator<GoogleCertificatesQuery> CREATOR = new AutoCreator<>(GoogleCertificatesQuery.class);
 }

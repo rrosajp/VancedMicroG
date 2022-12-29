@@ -8,8 +8,6 @@
 
 package com.google.android.gms.tasks;
 
-import android.app.Activity;
-
 import org.microg.gms.common.PublicApi;
 
 import java.util.concurrent.Executor;
@@ -21,42 +19,6 @@ import java.util.concurrent.Executor;
 public abstract class Task<TResult> {
 
     public Task() {
-    }
-
-    /**
-     * Adds a listener that is called if the Task is canceled.
-     * <p>
-     * The listener will be called on main application thread. If the Task has already been canceled, a call to the listener will be immediately scheduled. If multiple listeners are added, they will be called in the order in which they were added.
-     *
-     * @return this Task
-     */
-    public Task<TResult> addOnCanceledListener(OnCanceledListener listener) {
-        throw new UnsupportedOperationException("addOnCanceledListener is not implemented");
-    }
-
-    /**
-     * Adds a listener that is called if the Task is canceled.
-     * <p>
-     * If the Task has already been canceled, a call to the listener will be immediately scheduled. If multiple listeners are added, they will be called in the order in which they were added.
-     *
-     * @param executor the executor to use to call the listener
-     * @return this Task
-     */
-    public Task<TResult> addOnCanceledListener(Executor executor, OnCanceledListener listener) {
-        throw new UnsupportedOperationException("addOnCanceledListener is not implemented");
-    }
-
-    /**
-     * Adds an Activity-scoped listener that is called if the Task is canceled.
-     * <p>
-     * The listener will be called on main application thread. If the Task has already been canceled, a call to the listener will be immediately scheduled. If multiple listeners are added, they will be called in the order in which they were added.
-     * <p>
-     * The listener will be automatically removed during {@link Activity#onStop()}.
-     *
-     * @return this Task
-     */
-    public Task<TResult> addOnCanceledListener(Activity activity, OnCanceledListener listener) {
-        throw new UnsupportedOperationException("addOnCanceledListener is not implemented");
     }
 
     /**
@@ -73,21 +35,6 @@ public abstract class Task<TResult> {
     }
 
     /**
-     * Adds an Activity-scoped listener that is called when the Task completes.
-     * <p/>
-     * The listener will be called on main application thread. If the Task is already complete, a
-     * call to the listener will be immediately scheduled. If multiple listeners are added, they
-     * will be called in the order in which they were added.
-     * <p/>
-     * The listener will be automatically removed during {@link Activity#onStop()}.
-     *
-     * @return this Task
-     */
-    public Task<TResult> addOnCompleteListener(Activity activity, OnCompleteListener<TResult> listener) {
-        throw new UnsupportedOperationException("addOnCompleteListener is not implemented");
-    }
-
-    /**
      * Adds a listener that is called when the Task completes.
      * <p/>
      * If the Task is already complete, a call to the listener will be immediately scheduled. If
@@ -99,19 +46,6 @@ public abstract class Task<TResult> {
     public Task<TResult> addOnCompleteListener(Executor executor, OnCompleteListener<TResult> listener) {
         throw new UnsupportedOperationException("addOnCompleteListener is not implemented");
     }
-
-    /**
-     * Adds an Activity-scoped listener that is called if the Task fails.
-     * <p/>
-     * The listener will be called on main application thread. If the Task has already failed, a
-     * call to the listener will be immediately scheduled. If multiple listeners are added, they
-     * will be called in the order in which they were added.
-     * <p/>
-     * The listener will be automatically removed during {@link Activity#onStop()}.
-     *
-     * @return this Task
-     */
-    public abstract Task<TResult> addOnFailureListener(Activity activity, OnFailureListener listener);
 
     /**
      * Adds an Activity-scoped listener that is called if the Task fails.
@@ -157,19 +91,6 @@ public abstract class Task<TResult> {
      * @return this Task
      */
     public abstract Task<TResult> addOnSuccessListener(OnSuccessListener<? super TResult> listener);
-
-    /**
-     * Adds an Activity-scoped listener that is called if the Task completes successfully.
-     * <p/>
-     * The listener will be called on the main application thread. If the Task has already
-     * completed successfully, a call to the listener will be immediately scheduled. If multiple
-     * listeners are added, they will be called in the order in which they were added.
-     * <p/>
-     * The listener will be automatically removed during {@link Activity#onStop()}.
-     *
-     * @return this Task
-     */
-    public abstract Task<TResult> addOnSuccessListener(Activity activity, OnSuccessListener<? super TResult> listener);
 
 
     /**

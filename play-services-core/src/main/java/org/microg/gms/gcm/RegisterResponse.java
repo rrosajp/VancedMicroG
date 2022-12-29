@@ -18,6 +18,8 @@ package org.microg.gms.gcm;
 
 import static org.microg.gms.common.HttpFormClient.ResponseField;
 
+import androidx.annotation.NonNull;
+
 import org.microg.gms.common.HttpFormClient.ResponseHeader;
 import org.microg.gms.common.HttpFormClient.ResponseStatusText;
 
@@ -31,6 +33,7 @@ public class RegisterResponse {
     @ResponseStatusText
     public String responseText;
 
+    @NonNull
     @Override
     public String toString() {
         return "RegisterResponse{" +

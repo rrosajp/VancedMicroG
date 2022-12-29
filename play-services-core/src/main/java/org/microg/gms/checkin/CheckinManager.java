@@ -35,7 +35,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CheckinManager {
-    private static final String TAG = "GmsCheckinManager";
     private static final long MIN_CHECKIN_INTERVAL = 3 * 60 * 60 * 1000; // 3 hours
 
     @SuppressWarnings("MissingPermission")
@@ -58,9 +57,9 @@ public class CheckinManager {
                 accounts.add(new CheckinClient.Account(account.name, token));
             }
         }
-        CheckinRequest request = CheckinClient.makeRequest(context,
-                new DeviceConfiguration(context), Utils.getDeviceIdentifier(context),
-                Utils.getPhoneInfo(context), info, Utils.getLocale(context), accounts,
+        CheckinRequest request = CheckinClient.makeRequest(
+                new DeviceConfiguration(context), Utils.getDeviceIdentifier(),
+                Utils.getPhoneInfo(), info, Utils.getLocale(), accounts,
                 isSpoofingEnabled(context));
         return handleResponse(context, CheckinClient.request(request));
     }
@@ -71,6 +70,8 @@ public class CheckinManager {
 
         ContentResolver resolver = context.getContentResolver();
         for (CheckinResponse.GservicesSetting setting : response.setting) {
+            assert setting.name != null;
+            assert setting.value_ != null;
             GServices.setString(resolver, setting.name.utf8(), setting.value_.utf8());
         }
 

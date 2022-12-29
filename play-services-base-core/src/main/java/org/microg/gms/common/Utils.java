@@ -16,11 +16,6 @@
 
 package org.microg.gms.common;
 
-import static android.content.pm.PackageManager.PERMISSION_GRANTED;
-
-import android.content.Context;
-import android.util.Log;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,28 +23,16 @@ import java.util.Locale;
 
 public class Utils {
 
-    public static Locale getLocale(Context context) {
+    public static Locale getLocale() {
         return Locale.getDefault(); // TODO
     }
 
-    public static DeviceIdentifier getDeviceIdentifier(Context context) {
+    public static DeviceIdentifier getDeviceIdentifier() {
         return new DeviceIdentifier();
     }
 
-    public static PhoneInfo getPhoneInfo(Context context) {
+    public static PhoneInfo getPhoneInfo() {
         return new PhoneInfo();
-    }
-
-    public static boolean hasSelfPermissionOrNotify(Context context, String permission) {
-        if (context.checkCallingOrSelfPermission(permission) != PERMISSION_GRANTED) {
-            Log.w("GmsUtils", "Lacking permission to " + permission + " for pid:" + android.os.Process.myPid() + " uid:" + android.os.Process.myUid());
-            try {
-                //TODO: Toast.makeText(context, context.getString(R.string.lacking_permission_toast, permission), Toast.LENGTH_SHORT).show();
-            } catch (RuntimeException e) {
-            }
-            return false;
-        }
-        return true;
     }
 
     public static byte[] readStreamToEnd(final InputStream is) throws IOException {

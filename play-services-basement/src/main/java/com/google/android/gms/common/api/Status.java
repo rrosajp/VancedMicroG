@@ -32,14 +32,9 @@ import org.microg.safeparcel.SafeParceled;
 @PublicApi
 public final class Status extends AutoSafeParcelable implements Result {
     @PublicApi(exclude = true)
-    public static final Status INTERNAL_ERROR = new Status(CommonStatusCodes.INTERNAL_ERROR, "Internal error");
-    @PublicApi(exclude = true)
     public static final Status CANCELED = new Status(CommonStatusCodes.CANCELED, "Cancelled");
     @PublicApi(exclude = true)
     public static final Status SUCCESS = new Status(CommonStatusCodes.SUCCESS, "Success");
-
-    @SafeParceled(1000)
-    private final int versionCode = 1;
 
     @SafeParceled(1)
     private final int statusCode;
@@ -121,10 +116,6 @@ public final class Status extends AutoSafeParcelable implements Result {
         return statusCode;
     }
 
-    public String getStatusMessage() {
-        return statusMessage;
-    }
-
     /**
      * Returns true if calling {@link #startResolutionForResult(Activity, int)} will start any
      * intents requiring user interaction.
@@ -140,13 +131,6 @@ public final class Status extends AutoSafeParcelable implements Result {
      */
     public boolean isCanceled() {
         return statusCode == CommonStatusCodes.CANCELED;
-    }
-
-    /**
-     * Returns true if the operation was interrupted.
-     */
-    public boolean isInterrupted() {
-        return statusCode == CommonStatusCodes.INTERRUPTED;
     }
 
     /**

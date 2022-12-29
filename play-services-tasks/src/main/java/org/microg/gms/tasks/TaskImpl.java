@@ -5,11 +5,8 @@
 
 package org.microg.gms.tasks;
 
-import android.app.Activity;
-
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.DuplicateTaskCompletionException;
-import com.google.android.gms.tasks.OnCanceledListener;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -17,6 +14,7 @@ import com.google.android.gms.tasks.RuntimeExecutionException;
 import com.google.android.gms.tasks.SuccessContinuation;
 import com.google.android.gms.tasks.Task;
 
+import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executor;
@@ -33,21 +31,6 @@ public class TaskImpl<TResult> extends Task<TResult> {
     private final Queue<UpdateListener<TResult>> completionQueue = new LinkedBlockingQueue<>();
 
     @Override
-    public Task<TResult> addOnCanceledListener(OnCanceledListener listener) {
-        return addOnCanceledListener(MAIN_THREAD, listener);
-    }
-
-    @Override
-    public Task<TResult> addOnCanceledListener(Executor executor, OnCanceledListener listener) {
-        return enqueueOrInvoke(new CancelledExecutor<>(executor, listener));
-    }
-
-    @Override
-    public Task<TResult> addOnCanceledListener(Activity activity, OnCanceledListener listener) {
-        return enqueueOrInvoke(activity, new CancelledExecutor<>(MAIN_THREAD, listener));
-    }
-
-    @Override
     public Task<TResult> addOnCompleteListener(OnCompleteListener<TResult> listener) {
         return addOnCompleteListener(MAIN_THREAD, listener);
     }
@@ -55,11 +38,6 @@ public class TaskImpl<TResult> extends Task<TResult> {
     @Override
     public Task<TResult> addOnCompleteListener(Executor executor, OnCompleteListener<TResult> listener) {
         return enqueueOrInvoke(new CompletedExecutor<>(executor, listener));
-    }
-
-    @Override
-    public Task<TResult> addOnCompleteListener(Activity activity, OnCompleteListener<TResult> listener) {
-        return enqueueOrInvoke(activity, new CompletedExecutor<>(MAIN_THREAD, listener));
     }
 
     @Override
@@ -73,11 +51,6 @@ public class TaskImpl<TResult> extends Task<TResult> {
     }
 
     @Override
-    public Task<TResult> addOnFailureListener(Activity activity, OnFailureListener listener) {
-        return enqueueOrInvoke(activity, new FailureExecutor<>(MAIN_THREAD, listener));
-    }
-
-    @Override
     public Task<TResult> addOnSuccessListener(OnSuccessListener<? super TResult> listener) {
         return addOnSuccessListener(MAIN_THREAD, listener);
     }
@@ -85,11 +58,6 @@ public class TaskImpl<TResult> extends Task<TResult> {
     @Override
     public Task<TResult> addOnSuccessListener(Executor executor, OnSuccessListener<? super TResult> listener) {
         return enqueueOrInvoke(new SuccessExecutor<>(executor, listener));
-    }
-
-    @Override
-    public Task<TResult> addOnSuccessListener(Activity activity, OnSuccessListener<? super TResult> listener) {
-        return enqueueOrInvoke(activity, new SuccessExecutor<>(MAIN_THREAD, listener));
     }
 
     @Override
@@ -138,7 +106,7 @@ public class TaskImpl<TResult> extends Task<TResult> {
         synchronized (lock) {
             if (!completed) throw new IllegalStateException("Task is not yet complete");
             if (cancelled) throw new CancellationException("Task is canceled");
-            if (exceptionType.isInstance(exception)) throw exceptionType.cast(exception);
+            if (exceptionType.isInstance(exception)) throw Objects.requireNonNull(exceptionType.cast(exception));
             if (exception != null) throw new RuntimeExecutionException(exception);
             return result;
         }
@@ -163,22 +131,6 @@ public class TaskImpl<TResult> extends Task<TResult> {
         synchronized (lock) {
             return completed && !cancelled && exception == null;
         }
-    }
-
-    private void registerActivityStop(Activity activity, UpdateListener<TResult> listener) {
-        UpdateListenerLifecycleObserver.getObserverForActivity(activity).registerActivityStopListener(listener);
-    }
-
-    private Task<TResult> enqueueOrInvoke(Activity activity, UpdateListener<TResult> listener) {
-        synchronized (lock) {
-            if (completed) {
-                listener.onTaskUpdate(this);
-            } else {
-                completionQueue.offer(listener);
-                registerActivityStop(activity, listener);
-            }
-        }
-        return this;
     }
 
     private Task<TResult> enqueueOrInvoke(UpdateListener<TResult> listener) {

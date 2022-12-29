@@ -19,17 +19,14 @@ package org.microg.gms.auth.login;
 import static android.accounts.AccountManager.PACKAGE_NAME_KEY_LEGACY_NOT_VISIBLE;
 import static android.accounts.AccountManager.VISIBILITY_USER_MANAGED_VISIBLE;
 import static android.os.Build.VERSION.SDK_INT;
-import static android.telephony.TelephonyManager.SIM_STATE_UNKNOWN;
 import static android.view.KeyEvent.KEYCODE_BACK;
 import static android.view.View.INVISIBLE;
 import static android.view.View.VISIBLE;
-import static android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT;
 import static org.microg.gms.auth.AuthPrefs.isAuthVisible;
 import static org.microg.gms.checkin.CheckinPrefs.hideLauncherIcon;
 import static org.microg.gms.checkin.CheckinPrefs.isSpoofingEnabled;
 import static org.microg.gms.checkin.CheckinPrefs.setSpoofingEnabled;
 import static org.microg.gms.common.Constants.GMS_PACKAGE_NAME;
-import static org.microg.gms.common.Constants.GMS_VERSION_CODE;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -46,7 +43,6 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
@@ -83,7 +79,6 @@ public class LoginActivity extends AssistantActivity {
     public static final String EXTRA_TMPL = "tmpl";
     public static final String EXTRA_EMAIL = "email";
     public static final String EXTRA_TOKEN = "masterToken";
-    public static final int STATUS_BAR_DISABLE_BACK = 0x00400000;
 
     private static final String TAG = "GmsAuthLoginBrowser";
     private static final String EMBEDDED_SETUP_URL = "https://accounts.google.com/EmbeddedSetup";
@@ -95,12 +90,8 @@ public class LoginActivity extends AssistantActivity {
     private WebView webView;
     private String accountType;
     private AccountManager accountManager;
-    private InputMethodManager inputMethodManager;
     private ViewGroup authContent;
     private int state = 0;
-
-    private final String HuaweiButtonPreference = "huaweiloginbutton";
-    private final String LoginButtonPreference = "standardloginbutton";
 
     @SuppressLint("AddJavascriptInterface")
     @Override
@@ -108,10 +99,9 @@ public class LoginActivity extends AssistantActivity {
         super.onCreate(savedInstanceState);
         accountType = AuthConstants.DEFAULT_ACCOUNT_TYPE;
         accountManager = AccountManager.get(LoginActivity.this);
-        inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
         webView = createWebView(this);
         webView.addJavascriptInterface(new JsBridge(), "mm");
-        authContent = (ViewGroup) findViewById(R.id.auth_content);
+        authContent = findViewById(R.id.auth_content);
         ((ViewGroup) findViewById(R.id.auth_root)).addView(webView);
         webView.setWebViewClient(new WebViewClientCompat() {
             @Override
@@ -120,7 +110,6 @@ public class LoginActivity extends AssistantActivity {
                 Uri uri = Uri.parse(view.getUrl());
 
                 // Begin login.
-                // Only required if client code does not invoke showView() via JSBridge
                 if ("identifier".equals(uri.getFragment()) || uri.getPath().endsWith("/identifier"))
                     runOnUiThread(() -> webView.setVisibility(VISIBLE));
 
@@ -161,10 +150,8 @@ public class LoginActivity extends AssistantActivity {
         super.onHuaweiButtonClicked();
         state++;
         if (state == 1) {
-            if (SDK_INT >= 23) {
-                hideLauncherIcon(this, false);
-                UtilsKt.hideIcon(this, false);
-            }
+            hideLauncherIcon(this, false);
+            UtilsKt.hideIcon(this, false);
             if (!isSpoofingEnabled(this)) {
                 LastCheckinInfo.clear(this);
                 setSpoofingEnabled(this, true);
@@ -201,22 +188,12 @@ public class LoginActivity extends AssistantActivity {
         authContent.addView(loading);
         setMessage(R.string.auth_connecting);
         CookieManager.getInstance().setAcceptCookie(true);
-        if (SDK_INT >= 21) {
-            CookieManager.getInstance().removeAllCookies(value -> start());
-        } else {
-            //noinspection deprecation
-            CookieManager.getInstance().removeAllCookie();
-            start();
-        }
+        CookieManager.getInstance().removeAllCookies(value -> start());
     }
 
     private static WebView createWebView(Context context) {
         WebView webView = new WebView(context);
-        if (SDK_INT < 21) {
-            webView.setVisibility(VISIBLE);
-        } else {
-            webView.setVisibility(INVISIBLE);
-        }
+        webView.setVisibility(INVISIBLE);
         webView.setLayoutParams(new RelativeLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         webView.setBackgroundColor(Color.TRANSPARENT);
@@ -280,7 +257,7 @@ public class LoginActivity extends AssistantActivity {
 
     private void loadLoginPage() {
         String tmpl = getIntent().hasExtra(EXTRA_TMPL) ? getIntent().getStringExtra(EXTRA_TMPL) : TMPL_NEW_ACCOUNT;
-        webView.loadUrl(buildUrl(tmpl, Utils.getLocale(this)));
+        webView.loadUrl(buildUrl(tmpl, Utils.getLocale()));
     }
 
     private void closeWeb(boolean programmaticAuth) {
@@ -413,23 +390,6 @@ public class LoginActivity extends AssistantActivity {
 
     private class JsBridge {
 
-        @JavascriptInterface
-        public final void addAccount(String json) {
-            Log.d(TAG, "JSBridge: addAccount");
-        }
-
-        @JavascriptInterface
-        public final void closeView() {
-            Log.d(TAG, "JSBridge: closeView");
-            closeWeb(false);
-        }
-
-        @JavascriptInterface
-        public final String fetchVerifiedPhoneNumber() {
-            Log.d(TAG, "JSBridge: fetchVerifiedPhoneNumber");
-            return null;
-        }
-
         @SuppressWarnings("MissingPermission")
         @JavascriptInterface
         public final String getAccounts() {
@@ -443,128 +403,8 @@ public class LoginActivity extends AssistantActivity {
         }
 
         @JavascriptInterface
-        public final String getAllowedDomains() {
-            Log.d(TAG, "JSBridge: getAllowedDomains");
-            return new JSONArray().toString();
-        }
-
-        @JavascriptInterface
-        public final String getAndroidId() {
-            long androidId = LastCheckinInfo.read(LoginActivity.this).getAndroidId();
-            Log.d(TAG, "JSBridge: getAndroidId");
-            if (androidId == 0 || androidId == -1) return null;
-            return Long.toHexString(androidId);
-        }
-
-        @JavascriptInterface
-        public final int getAuthModuleVersionCode() {
-            return 1;
-        }
-
-        @JavascriptInterface
-        public final int getBuildVersionSdk() {
-            return SDK_INT;
-        }
-
-        @JavascriptInterface
-        public final int getDeviceDataVersionInfo() {
-            return 1;
-        }
-
-        @JavascriptInterface
-        public final String getFactoryResetChallenges() {
-            return new JSONArray().toString();
-        }
-
-        @JavascriptInterface
-        public final String getPhoneNumber() {
-            return null;
-        }
-
-        @JavascriptInterface
-        public final int getPlayServicesVersionCode() {
-            return GMS_VERSION_CODE;
-        }
-
-        @JavascriptInterface
-        public final String getSimSerial() {
-            return null;
-        }
-
-        @JavascriptInterface
-        public final int getSimState() {
-            return SIM_STATE_UNKNOWN;
-        }
-
-        @JavascriptInterface
-        public final void goBack() {
-            Log.d(TAG, "JSBridge: goBack");
-        }
-
-        @JavascriptInterface
-        public final boolean hasPhoneNumber() {
-            return false;
-        }
-
-        @JavascriptInterface
-        public final boolean hasTelephony() {
-            return false;
-        }
-
-        @JavascriptInterface
-        public final void hideKeyboard() {
-            inputMethodManager.hideSoftInputFromWindow(webView.getWindowToken(), 0);
-        }
-
-        @JavascriptInterface
-        public final boolean isUserOwner() {
-            return true;
-        }
-
-        @JavascriptInterface
-        public final void launchEmergencyDialer() {
-            Log.d(TAG, "JSBridge: launchEmergencyDialer");
-        }
-
-        @JavascriptInterface
-        public final void log(String s) {
+        public final void log() {
             Log.d(TAG, "JSBridge: log");
-        }
-
-        @JavascriptInterface
-        public final void notifyOnTermsOfServiceAccepted() {
-            Log.d(TAG, "JSBridge: notifyOnTermsOfServiceAccepted");
-        }
-
-        @JavascriptInterface
-        public final void setAccountIdentifier(String accountIdentifier) {
-            Log.d(TAG, "JSBridge: setAccountIdentifier");
-        }
-
-        @JavascriptInterface
-        public final void setNewAccountCreated() {
-            Log.d(TAG, "JSBridge: setNewAccountCreated");
-        }
-
-        @JavascriptInterface
-        public final void showKeyboard() {
-            inputMethodManager.showSoftInput(webView, SHOW_IMPLICIT);
-        }
-
-        @JavascriptInterface
-        public final void showView() {
-            runOnUiThread(() -> webView.setVisibility(VISIBLE));
-        }
-
-        @JavascriptInterface
-        public final void skipLogin() {
-            Log.d(TAG, "JSBridge: skipLogin");
-            finish();
-        }
-
-        @JavascriptInterface
-        public final void startAfw() {
-            Log.d(TAG, "JSBridge: startAfw");
         }
 
     }

@@ -19,15 +19,12 @@ package com.google.android.gms.common.api;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.Looper;
-import android.view.View;
 
 import androidx.fragment.app.FragmentActivity;
 
 import com.google.android.gms.common.ConnectionResult;
 
-import org.microg.gms.auth.AuthConstants;
 import org.microg.gms.common.PublicApi;
 import org.microg.gms.common.api.ApiClientSettings;
 import org.microg.gms.common.api.GoogleApiClientImpl;
@@ -59,13 +56,6 @@ import java.util.concurrent.TimeUnit;
 @PublicApi
 @Deprecated
 public interface GoogleApiClient {
-    /**
-     * Connects the client to Google Play services. Blocks until the connection either succeeds or
-     * fails. This is not allowed on the UI thread.
-     *
-     * @return the result of the connection
-     */
-    ConnectionResult blockingConnect();
 
     /**
      * Connects the client to Google Play services. Blocks until the connection is set or failed or
@@ -209,7 +199,7 @@ public interface GoogleApiClient {
      *
      * @param lifecycleActivity the activity managing the client's lifecycle.
      * @throws IllegalStateException if called from outside of the main thread.
-     * @see Builder#enableAutoManage(FragmentActivity, int, OnConnectionFailedListener)
+     * @see #enableAutoManage(int, OnConnectionFailedListener)
      */
     void stopAutoManager(FragmentActivity lifecycleActivity) throws IllegalStateException;
 
@@ -245,13 +235,8 @@ public interface GoogleApiClient {
         private final Set<ConnectionCallbacks> connectionCallbacks = new HashSet<>();
         private final Set<OnConnectionFailedListener> connectionFailedListeners = new HashSet<>();
         private final Set<String> scopes = new HashSet<>();
-        private String accountName;
         private int clientId = -1;
-        private FragmentActivity fragmentActivity;
         private Looper looper;
-        private int gravityForPopups;
-        private OnConnectionFailedListener unresolvedConnectionFailedListener;
-        private View viewForPopups;
 
         /**
          * Builder to help construct the {@link GoogleApiClient} object.
@@ -317,9 +302,8 @@ public interface GoogleApiClient {
          * @param listener the listener where the results of the asynchronous {@link #connect()}
          *                 call are delivered.
          */
-        public Builder addConnectionCallbacks(ConnectionCallbacks listener) {
+        public void addConnectionCallbacks(ConnectionCallbacks listener) {
             connectionCallbacks.add(listener);
-            return this;
         }
 
         /**
@@ -337,21 +321,8 @@ public interface GoogleApiClient {
          * @param listener the listener where the results of the asynchronous {@link #connect()}
          *                 call are delivered.
          */
-        public Builder addOnConnectionFailedListener(OnConnectionFailedListener listener) {
+        public void addOnConnectionFailedListener(OnConnectionFailedListener listener) {
             connectionFailedListeners.add(listener);
-            return this;
-        }
-
-        /**
-         * Specify the OAuth 2.0 scopes requested by your app. See
-         * {@link com.google.android.gms.common.Scopes} for more information.
-         *
-         * @param scope The OAuth 2.0 scopes requested by your app.
-         * @see com.google.android.gms.common.Scopes
-         */
-        public Builder addScope(Scope scope) {
-            scopes.add(scope.getScopeUri());
-            return this;
         }
 
         /**
@@ -360,71 +331,17 @@ public interface GoogleApiClient {
          * @return The {@link GoogleApiClient} object.
          */
         public GoogleApiClient build() {
-            return new GoogleApiClientImpl(context, looper, getClientSettings(), apis, connectionCallbacks, connectionFailedListeners, clientId);
+            return new GoogleApiClientImpl(context, looper, getClientSettings(), apis, connectionCallbacks, connectionFailedListeners);
         }
 
         private ApiClientSettings getClientSettings() {
             return null;
         }
 
-        public Builder enableAutoManage(FragmentActivity fragmentActivity, int cliendId,
-                                        OnConnectionFailedListener unresolvedConnectionFailedListener)
-                throws NullPointerException, IllegalArgumentException, IllegalStateException {
-            this.fragmentActivity = fragmentActivity;
-            this.clientId = cliendId;
-            this.unresolvedConnectionFailedListener = unresolvedConnectionFailedListener;
-            return this;
-        }
-
-        /**
-         * Specify an account name on the device that should be used. If this is never called, the
-         * client will use the current default account for Google Play services for this
-         * application.
-         *
-         * @param accountName The account name on the device that should be used by
-         *                    {@link GoogleApiClient}.
-         */
-        public Builder setAccountName(String accountName) {
-            this.accountName = accountName;
-            return this;
-        }
-
-        /**
-         * Specifies the part of the screen at which games service popups (for example,
-         * "welcome back" or "achievement unlocked" popups) will be displayed using gravity.
-         *
-         * @param gravityForPopups The gravity which controls the placement of games service popups.
-         */
-        public Builder setGravityForPopups(int gravityForPopups) {
-            this.gravityForPopups = gravityForPopups;
-            return this;
-        }
-
-        /**
-         * Sets a {@link Handler} to indicate which thread to use when invoking callbacks. Will not
-         * be used directly to handle callbacks. If this is not called then the application's main
-         * thread will be used.
-         */
-        public Builder setHandler(Handler handler) {
-            this.looper = handler.getLooper();
-            return this;
-        }
-
-        /**
-         * Sets the {@link View} to use as a content view for popups.
-         *
-         * @param viewForPopups The view to use as a content view for popups. View cannot be null.
-         */
-        public Builder setViewForPopups(View viewForPopups) {
-            this.viewForPopups = viewForPopups;
-            return this;
-        }
-
         /**
          * Specify that the default account should be used when connecting to services.
          */
         public Builder useDefaultAccount() {
-            this.accountName = AuthConstants.DEFAULT_ACCOUNT;
             return this;
         }
     }
@@ -436,14 +353,6 @@ public interface GoogleApiClient {
     @PublicApi
     @Deprecated
     interface ConnectionCallbacks extends org.microg.gms.common.api.ConnectionCallbacks {
-        /**
-         * A suspension cause informing that the service has been killed.
-         */
-        int CAUSE_SERVICE_DISCONNECTED = 1;
-        /**
-         * A suspension cause informing you that a peer device connection was lost.
-         */
-        int CAUSE_NETWORK_LOST = 2;
     }
 
     /**

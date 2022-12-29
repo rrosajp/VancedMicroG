@@ -38,8 +38,6 @@ public class McsOutputStream extends Thread implements Handler.Callback, Closeab
 
     private final OutputStream os;
     private boolean initialized;
-    private final int version = MCS_VERSION_CODE;
-    private int streamId = 0;
 
     private final Handler mainHandler;
     private Handler myHandler;
@@ -55,10 +53,6 @@ public class McsOutputStream extends Thread implements Handler.Callback, Closeab
         this.mainHandler = mainHandler;
         this.initialized = initialized;
         setName("McsOutputStream");
-    }
-
-    public int getStreamId() {
-        return streamId;
     }
 
     @Override
@@ -110,6 +104,7 @@ public class McsOutputStream extends Thread implements Handler.Callback, Closeab
 
     private synchronized void writeInternal(Message message, int tag) throws IOException {
         if (!initialized) {
+            int version = MCS_VERSION_CODE;
             Log.d(TAG, "Write MCS version code: " + version);
             os.write(version);
             initialized = true;
@@ -119,7 +114,6 @@ public class McsOutputStream extends Thread implements Handler.Callback, Closeab
         writeVarint(os, bytes.length);
         os.write(bytes);
         os.flush();
-        streamId++;
     }
 
     private void writeVarint(OutputStream os, int value) throws IOException {

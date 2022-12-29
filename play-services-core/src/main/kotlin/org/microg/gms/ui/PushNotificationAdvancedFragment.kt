@@ -106,8 +106,4 @@ class PushNotificationAdvancedFragment : PreferenceFragmentCompat() {
             (heartbeatMs / 1000).toString() + " " + getString(R.string.gcm_status_pref_sec)
         } else (heartbeatMs / SettingsProvider.INTERVAL).toString() + " " + getString(R.string.gcm_status_pref_min)
     }
-
-    companion object {
-        private val HEARTBEAT_PREFS = arrayOf(GcmPrefs.PREF_NETWORK_MOBILE, GcmPrefs.PREF_NETWORK_ROAMING, GcmPrefs.PREF_NETWORK_WIFI, GcmPrefs.PREF_NETWORK_OTHER)
-    }
 }

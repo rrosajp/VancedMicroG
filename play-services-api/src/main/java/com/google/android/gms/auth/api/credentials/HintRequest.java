@@ -8,6 +8,8 @@
 
 package com.google.android.gms.auth.api.credentials;
 
+import androidx.annotation.NonNull;
+
 import org.microg.gms.common.PublicApi;
 import org.microg.safeparcel.AutoSafeParcelable;
 
@@ -19,26 +21,21 @@ import java.util.Arrays;
  */
 @PublicApi
 public class HintRequest extends AutoSafeParcelable {
-    @Field(1000)
-    private final int versionCode = 2;
 
     @Field(1)
-    private CredentialPickerConfig hintPickerConfig;
+    private final CredentialPickerConfig hintPickerConfig;
     @Field(2)
-    private boolean emailAddressIdentifierSupported;
+    private final boolean emailAddressIdentifierSupported;
     @Field(3)
-    private boolean phoneNumberIdentifierSupported;
+    private final boolean phoneNumberIdentifierSupported;
     @Field(4)
-    private String[] accountTypes;
+    private final String[] accountTypes;
     @Field(5)
-    private boolean idTokenRequested = true;
+    private final boolean idTokenRequested;
     @Field(6)
-    private String serverClientId;
+    private final String serverClientId;
     @Field(7)
-    private String idTokenNonce;
-
-    private HintRequest() {
-    }
+    private final String idTokenNonce;
 
     public HintRequest(CredentialPickerConfig hintPickerConfig, boolean emailAddressIdentifierSupported, boolean phoneNumberIdentifierSupported, String[] accountTypes, boolean idTokenRequested, String serverClientId, String idTokenNonce) {
         this.hintPickerConfig = hintPickerConfig;
@@ -50,36 +47,9 @@ public class HintRequest extends AutoSafeParcelable {
         this.idTokenNonce = idTokenNonce;
     }
 
-    public String[] getAccountTypes() {
-        return accountTypes;
-    }
-
-    public CredentialPickerConfig getHintPickerConfig() {
-        return hintPickerConfig;
-    }
-
-    public String getIdTokenNonce() {
-        return idTokenNonce;
-    }
-
-    public String getServerClientId() {
-        return serverClientId;
-    }
-
-    public boolean isEmailAddressIdentifierSupported() {
-        return emailAddressIdentifierSupported;
-    }
-
-    public boolean isPhoneNumberIdentifierSupported() {
-        return phoneNumberIdentifierSupported;
-    }
-
-    public boolean isIdTokenRequested() {
-        return idTokenRequested;
-    }
-
     public static final Creator<HintRequest> CREATOR = new AutoCreator<>(HintRequest.class);
 
+    @NonNull
     @Override
     public String toString() {
         return "HintRequest{" +

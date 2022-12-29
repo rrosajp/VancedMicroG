@@ -33,10 +33,6 @@ import java.util.Locale;
 
 public class AuthRequest extends HttpFormClient.Request {
     private static final String SERVICE_URL = "https://android.googleapis.com/auth";
-    private static final String USER_AGENT = "GoogleAuth/1.4 (%s %s); gzip";
-
-    @RequestHeader("User-Agent")
-    private String userAgent;
 
     @RequestHeader("app")
     @RequestContent("app")
@@ -58,10 +54,6 @@ public class AuthRequest extends HttpFormClient.Request {
     public String operatorCountryCode;
     @RequestContent("lang")
     public String locale;
-    @RequestContent("google_play_services_version")
-    public int gmsVersion = Constants.GMS_VERSION_CODE;
-    @RequestContent("accountType")
-    public String accountType;
     @RequestContent("Email")
     public String email;
     @RequestContent("service")
@@ -87,7 +79,6 @@ public class AuthRequest extends HttpFormClient.Request {
 
     @Override
     protected void prepare() {
-        userAgent = String.format(USER_AGENT, deviceName, buildVersion);
     }
 
     public AuthRequest build(Context context) {
@@ -103,16 +94,15 @@ public class AuthRequest extends HttpFormClient.Request {
         return this;
     }
 
-    public AuthRequest locale(Locale locale) {
+    public void locale(Locale locale) {
         this.locale = locale.toString();
         this.countryCode = locale.getCountry().toLowerCase();
         this.operatorCountryCode = locale.getCountry().toLowerCase();
-        return this;
     }
 
     public AuthRequest fromContext(Context context) {
         build(context);
-        locale(Utils.getLocale(context));
+        locale(Utils.getLocale());
         androidIdHex = Long.toHexString(LastCheckinInfo.read(context).getAndroidId());
         return this;
     }
@@ -146,8 +136,8 @@ public class AuthRequest extends HttpFormClient.Request {
         return caller(Constants.GMS_PACKAGE_NAME, Constants.GMS_PACKAGE_SIGNATURE_SHA1);
     }
 
-    public AuthRequest callerIsApp() {
-        return caller(app, appSignature);
+    public void callerIsApp() {
+        caller(app, appSignature);
     }
 
     public AuthRequest caller(String caller, String callerSignature) {
@@ -156,9 +146,8 @@ public class AuthRequest extends HttpFormClient.Request {
         return this;
     }
 
-    public AuthRequest calledFromAccountManager() {
+    public void calledFromAccountManager() {
         isCalledFromAccountManager = true;
-        return this;
     }
 
     public AuthRequest addAccount() {

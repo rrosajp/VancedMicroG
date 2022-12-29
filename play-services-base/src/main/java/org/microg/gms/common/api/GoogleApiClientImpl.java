@@ -38,53 +38,45 @@ import java.util.concurrent.TimeUnit;
 public class GoogleApiClientImpl implements GoogleApiClient {
     private static final String TAG = "GmsApiClientImpl";
 
-    private final Context context;
     private final Looper looper;
-    private final ApiClientSettings clientSettings;
-    private final Map<Api, Api.ApiOptions> apis = new HashMap<>();
     private final Map<Api, ApiClient> apiConnections = new HashMap<>();
     private final Set<ConnectionCallbacks> connectionCallbacks = new HashSet<>();
     private final Set<OnConnectionFailedListener> connectionFailedListeners = new HashSet<>();
-    private final int clientId;
-    private final ConnectionCallbacks baseConnectionCallbacks = new ConnectionCallbacks() {
-        @Override
-        public void onConnected(Bundle connectionHint) {
-            Log.d(TAG, "ConnectionCallbacks : onConnected()");
-            for (ConnectionCallbacks callback : connectionCallbacks) {
-                callback.onConnected(connectionHint);
-            }
-        }
-
-        @Override
-        public void onConnectionSuspended(int cause) {
-            Log.d(TAG, "ConnectionCallbacks : onConnectionSuspended()");
-            for (ConnectionCallbacks callback : connectionCallbacks) {
-                callback.onConnectionSuspended(cause);
-            }
-        }
-    };
-    private final OnConnectionFailedListener baseConnectionFailedListener = result -> {
-        Log.d(TAG, "OnConnectionFailedListener : onConnectionFailed()");
-        for (OnConnectionFailedListener listener : connectionFailedListeners) {
-            listener.onConnectionFailed(result);
-        }
-    };
     private int usageCounter = 0;
     private boolean shouldDisconnect = false;
 
     public GoogleApiClientImpl(Context context, Looper looper, ApiClientSettings clientSettings,
                                Map<Api, Api.ApiOptions> apis,
                                Set<ConnectionCallbacks> connectionCallbacks,
-                               Set<OnConnectionFailedListener> connectionFailedListeners, int clientId) {
-        this.context = context;
+                               Set<OnConnectionFailedListener> connectionFailedListeners) {
         this.looper = looper;
-        this.clientSettings = clientSettings;
-        this.apis.putAll(apis);
         this.connectionCallbacks.addAll(connectionCallbacks);
         this.connectionFailedListeners.addAll(connectionFailedListeners);
-        this.clientId = clientId;
 
         for (Api api : apis.keySet()) {
+            ConnectionCallbacks baseConnectionCallbacks = new ConnectionCallbacks() {
+                @Override
+                public void onConnected(Bundle connectionHint) {
+                    Log.d(TAG, "ConnectionCallbacks : onConnected()");
+                    for (ConnectionCallbacks callback : connectionCallbacks) {
+                        callback.onConnected(connectionHint);
+                    }
+                }
+
+                @Override
+                public void onConnectionSuspended(int cause) {
+                    Log.d(TAG, "ConnectionCallbacks : onConnectionSuspended()");
+                    for (ConnectionCallbacks callback : connectionCallbacks) {
+                        callback.onConnectionSuspended(cause);
+                    }
+                }
+            };
+            OnConnectionFailedListener baseConnectionFailedListener = result -> {
+                Log.d(TAG, "OnConnectionFailedListener : onConnectionFailed()");
+                for (OnConnectionFailedListener listener : connectionFailedListeners) {
+                    listener.onConnectionFailed(result);
+                }
+            };
             apiConnections.put(api, api.getBuilder().build(apis.get(api), context, looper, clientSettings, baseConnectionCallbacks, baseConnectionFailedListener));
         }
     }
@@ -104,11 +96,6 @@ public class GoogleApiClientImpl implements GoogleApiClient {
 
     public ApiClient getApiConnection(Api api) {
         return apiConnections.get(api);
-    }
-
-    @Override
-    public ConnectionResult blockingConnect() {
-        return null;
     }
 
     @Override

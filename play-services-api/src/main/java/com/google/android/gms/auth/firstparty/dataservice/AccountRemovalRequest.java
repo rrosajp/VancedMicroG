@@ -24,8 +24,6 @@ import org.microg.safeparcel.SafeParceled;
 
 public class AccountRemovalRequest extends AutoSafeParcelable {
 
-    @SafeParceled(1)
-    private final int versionCode = 1;
     @SafeParceled(2)
     @Deprecated
     public final String accountName;
@@ -37,10 +35,5 @@ public class AccountRemovalRequest extends AutoSafeParcelable {
         this.account = new Account(accountName, AuthConstants.DEFAULT_ACCOUNT_TYPE);
     }
 
-    public AccountRemovalRequest(Account account) {
-        this.accountName = account.name;
-        this.account = account;
-    }
-
-    public static final Creator<AccountRemovalRequest> CREATOR = new AutoCreator<AccountRemovalRequest>(AccountRemovalRequest.class);
+    public static final Creator<AccountRemovalRequest> CREATOR = new AutoCreator<>(AccountRemovalRequest.class);
 }

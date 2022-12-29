@@ -16,28 +16,6 @@
 
 package org.microg.gms.auth.loginservice;
 
-import android.accounts.AbstractAccountAuthenticator;
-import android.accounts.Account;
-import android.accounts.AccountAuthenticatorResponse;
-import android.accounts.AccountManager;
-import android.accounts.NetworkErrorException;
-import android.content.Context;
-import android.content.Intent;
-import android.os.Bundle;
-import android.util.Base64;
-import android.util.Log;
-
-import com.mgoogle.android.gms.R;
-
-import org.microg.gms.auth.AuthConstants;
-import org.microg.gms.auth.AuthManager;
-import org.microg.gms.auth.AuthResponse;
-import org.microg.gms.auth.login.LoginActivity;
-import org.microg.gms.common.PackageUtils;
-
-import java.util.Arrays;
-import java.util.List;
-
 import static android.accounts.AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE;
 import static android.accounts.AccountManager.KEY_ACCOUNT_NAME;
 import static android.accounts.AccountManager.KEY_ACCOUNT_TYPE;
@@ -47,6 +25,24 @@ import static android.accounts.AccountManager.KEY_BOOLEAN_RESULT;
 import static android.accounts.AccountManager.KEY_CALLER_PID;
 import static android.accounts.AccountManager.KEY_CALLER_UID;
 import static android.accounts.AccountManager.KEY_INTENT;
+
+import android.accounts.AbstractAccountAuthenticator;
+import android.accounts.Account;
+import android.accounts.AccountAuthenticatorResponse;
+import android.accounts.AccountManager;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import android.util.Log;
+
+import org.microg.gms.auth.AuthConstants;
+import org.microg.gms.auth.AuthManager;
+import org.microg.gms.auth.AuthResponse;
+import org.microg.gms.auth.login.LoginActivity;
+import org.microg.gms.common.PackageUtils;
+
+import java.util.Arrays;
+import java.util.List;
 
 class AccountAuthenticator extends AbstractAccountAuthenticator {
     private static final String TAG = "GmsAuthenticator";
@@ -66,7 +62,7 @@ class AccountAuthenticator extends AbstractAccountAuthenticator {
     }
 
     @Override
-    public Bundle addAccount(AccountAuthenticatorResponse response, String accountType, String authTokenType, String[] requiredFeatures, Bundle options) throws NetworkErrorException {
+    public Bundle addAccount(AccountAuthenticatorResponse response, String accountType, String authTokenType, String[] requiredFeatures, Bundle options) {
         if (accountType.equals(this.accountType)) {
             final Intent i = new Intent(context, LoginActivity.class);
             i.putExtras(options);
@@ -80,17 +76,18 @@ class AccountAuthenticator extends AbstractAccountAuthenticator {
     }
 
     @Override
-    public Bundle confirmCredentials(AccountAuthenticatorResponse response, Account account, Bundle options) throws NetworkErrorException {
+    public Bundle confirmCredentials(AccountAuthenticatorResponse response, Account account, Bundle options) {
         Log.d(TAG, "confirmCredentials: " + account + ", " + options);
         return null;
     }
 
     @Override
-    public Bundle getAuthToken(AccountAuthenticatorResponse response, Account account, String authTokenType, Bundle options) throws NetworkErrorException {
+    public Bundle getAuthToken(AccountAuthenticatorResponse response, Account account, String authTokenType, Bundle options) {
         options.keySet();
         Log.d(TAG, "getAuthToken: " + account + ", " + authTokenType + ", " + options);
         String app = options.getString(KEY_ANDROID_PACKAGE_NAME);
         app = PackageUtils.getAndCheckPackage(context, app, options.getInt(KEY_CALLER_UID), options.getInt(KEY_CALLER_PID));
+        assert app != null;
         AuthManager authManager = new AuthManager(context, account.name, app, authTokenType);
         try {
             AuthResponse res = authManager.requestAuth(true);
@@ -116,13 +113,13 @@ class AccountAuthenticator extends AbstractAccountAuthenticator {
     }
 
     @Override
-    public Bundle updateCredentials(AccountAuthenticatorResponse response, Account account, String authTokenType, Bundle options) throws NetworkErrorException {
+    public Bundle updateCredentials(AccountAuthenticatorResponse response, Account account, String authTokenType, Bundle options) {
         Log.d(TAG, "updateCredentials: " + account + ", " + authTokenType + ", " + options);
         return null;
     }
 
     @Override
-    public Bundle hasFeatures(AccountAuthenticatorResponse response, Account account, String[] features) throws NetworkErrorException {
+    public Bundle hasFeatures(AccountAuthenticatorResponse response, Account account, String[] features) {
         Log.d(TAG, "hasFeatures: " + account + ", " + Arrays.toString(features));
         AccountManager accountManager = AccountManager.get(context);
         String services = accountManager.getUserData(account, "services");

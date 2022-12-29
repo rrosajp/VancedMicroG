@@ -20,8 +20,6 @@ import android.accounts.Account;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.util.Log;
 
 import org.json.JSONObject;
@@ -35,6 +33,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Objects;
 
 public class PeopleManager {
     private static final String TAG = "GmsPeopleManager";
@@ -55,7 +54,7 @@ public class PeopleManager {
         if (url == null) return null;
         String urlLastPart = url.replaceFirst(REGEX_SEARCH_USER_PHOTO, "");
         File file = new File(context.getCacheDir(), urlLastPart);
-        if (!file.getParentFile().mkdirs() && file.exists()) {
+        if (!Objects.requireNonNull(file.getParentFile()).mkdirs() && file.exists()) {
             return file;
         }
         if (!network) return null;
@@ -72,12 +71,6 @@ public class PeopleManager {
             return null;
         }
 
-    }
-
-    public static Bitmap getOwnerAvatarBitmap(Context context, String accountName, boolean network) {
-        File avaterFile = getOwnerAvatarFile(context, accountName, network);
-        if (avaterFile == null) return null;
-        return BitmapFactory.decodeFile(avaterFile.getPath());
     }
 
     public static String loadUserInfo(Context context, Account account) {

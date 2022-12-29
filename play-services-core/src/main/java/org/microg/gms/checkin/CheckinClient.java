@@ -16,7 +16,6 @@
 
 package org.microg.gms.checkin;
 
-import android.content.Context;
 import android.util.Log;
 
 import org.microg.gms.common.DeviceConfiguration;
@@ -44,7 +43,7 @@ public class CheckinClient {
     private static final String TAG = "GmsCheckinClient";
     private static final Object TODO = null; // TODO
     private static final List<String> TODO_LIST_STRING = new ArrayList<>(); // TODO
-    private static final List<CheckinRequest.Checkin.Statistic> TODO_LIST_CHECKIN = new ArrayList<CheckinRequest.Checkin.Statistic>(); // TODO
+    private static final List<CheckinRequest.Checkin.Statistic> TODO_LIST_CHECKIN = new ArrayList<>(); // TODO
     private static final String SERVICE_URL = "https://android.clients.google.com/checkin";
     
     public static CheckinResponse request(CheckinRequest request) throws IOException {
@@ -76,7 +75,7 @@ public class CheckinClient {
         return response;
     }
 
-    public static CheckinRequest makeRequest(Context context, DeviceConfiguration deviceConfiguration,
+    public static CheckinRequest makeRequest(DeviceConfiguration deviceConfiguration,
                                              DeviceIdentifier deviceIdent, PhoneInfo phoneInfo,
                                              LastCheckinInfo checkinInfo, Locale locale,
                                              List<Account> accounts, Boolean brandSpoof) {

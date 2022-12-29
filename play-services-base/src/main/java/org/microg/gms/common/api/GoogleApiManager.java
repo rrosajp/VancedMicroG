@@ -5,6 +5,7 @@
 
 package org.microg.gms.common.api;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
 
@@ -20,6 +21,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class GoogleApiManager {
+    @SuppressLint("StaticFieldLeak")
     private static GoogleApiManager instance;
     private final Context context;
     private final Map<ApiInstance, ApiClient> clientMap = new HashMap<>();
@@ -53,27 +55,29 @@ public class GoogleApiManager {
         if (connected) {
             apiCall.execute(client, completionSource);
         } else {
-            waitingApiCallMap.get(new ApiInstance(api)).add(new WaitingApiCall<>((PendingGoogleApiCall<R, ApiClient>) apiCall, completionSource));
+            Objects.requireNonNull(waitingApiCallMap.get(new ApiInstance(api))).add(new WaitingApiCall<>((PendingGoogleApiCall<R, ApiClient>) apiCall, completionSource));
             if (!connecting) {
                 client.connect();
             }
         }
     }
 
-    private synchronized void onInstanceConnected(ApiInstance apiInstance, Bundle connectionHint) {
+    private synchronized void onInstanceConnected(ApiInstance apiInstance) {
         List<WaitingApiCall<?>> waitingApiCalls = waitingApiCallMap.get(apiInstance);
+        assert waitingApiCalls != null;
         for (WaitingApiCall<?> waitingApiCall : waitingApiCalls) {
             waitingApiCall.execute(clientMap.get(apiInstance));
         }
         waitingApiCalls.clear();
     }
 
-    private synchronized void onInstanceSuspended(ApiInstance apiInstance, int cause) {
+    private synchronized void onInstanceSuspended() {
 
     }
 
     private synchronized void onInstanceFailed(ApiInstance apiInstance, ConnectionResult result) {
         List<WaitingApiCall<?>> waitingApiCalls = waitingApiCallMap.get(apiInstance);
+        assert waitingApiCalls != null;
         for (WaitingApiCall<?> waitingApiCall : waitingApiCalls) {
             waitingApiCall.failed(new RuntimeException(result.getErrorMessage()));
         }
@@ -89,12 +93,12 @@ public class GoogleApiManager {
 
         @Override
         public void onConnected(Bundle connectionHint) {
-            onInstanceConnected(apiInstance, connectionHint);
+            onInstanceConnected(apiInstance);
         }
 
         @Override
         public void onConnectionSuspended(int cause) {
-            onInstanceSuspended(apiInstance, cause);
+            onInstanceSuspended();
         }
     }
 

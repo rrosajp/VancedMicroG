@@ -25,7 +25,7 @@ class PushNotificationAppFragment : Fragment(R.layout.push_notification_fragment
     val packageName: String?
         get() = arguments?.getString("package")
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         binding = PushNotificationAppFragmentBinding.inflate(inflater, container, false)
         binding.callbacks = object : PushNotificationAppFragmentCallbacks {
             override fun onAppClicked() {
