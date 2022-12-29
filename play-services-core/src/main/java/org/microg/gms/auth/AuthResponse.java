@@ -18,12 +18,9 @@ package org.microg.gms.auth;
 
 import static org.microg.gms.common.HttpFormClient.ResponseField;
 
-import android.util.Log;
-
-import java.lang.reflect.Field;
+import androidx.annotation.NonNull;
 
 public class AuthResponse {
-    private static final String TAG = "GmsAuthResponse";
 
     @ResponseField("SID")
     public String Sid;
@@ -64,35 +61,7 @@ public class AuthResponse {
     @ResponseField("ConsentDataBase64")
     public String consentDataBase64;
 
-    public static AuthResponse parse(String result) {
-        AuthResponse response = new AuthResponse();
-        String[] entries = result.split("\n");
-        for (String s : entries) {
-            String[] keyValuePair = s.split("=", 2);
-            String key = keyValuePair[0].trim();
-            String value = keyValuePair[1].trim();
-            try {
-                for (Field field : AuthResponse.class.getDeclaredFields()) {
-                    if (field.isAnnotationPresent(ResponseField.class) &&
-                            key.equals(field.getAnnotation(ResponseField.class).value())) {
-                        if (field.getType().equals(String.class)) {
-                            field.set(response, value);
-                        } else if (field.getType().equals(boolean.class)) {
-                            field.setBoolean(response, value.equals("1"));
-                        } else if (field.getType().equals(long.class)) {
-                            field.setLong(response, Long.parseLong(value));
-                        } else if (field.getType().equals(int.class)) {
-                            field.setInt(response, Integer.parseInt(value));
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                Log.w(TAG, e);
-            }
-        }
-        return response;
-    }
-
+    @NonNull
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("AuthResponse{");

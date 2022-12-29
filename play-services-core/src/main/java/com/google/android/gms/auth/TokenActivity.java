@@ -29,26 +29,5 @@ public class TokenActivity extends Activity {
         Bundle extras = getIntent().getExtras();
         extras.get("KEY");
         Log.d(TAG, extras.toString());
-        /*AccountManager accountManager = AccountManager.get(this);
-        accountManager.getAuthToken(new Account(extras.getString("authAccount"), "com.google"), extras.getString("service"), extras.getBundle("callerExtras"), this, new AccountManagerCallback<Bundle>() {
-            @Override
-            public void run(AccountManagerFuture<Bundle> future) {
-                try {
-                    Bundle result = future.getResult();
-                    if (result != null) {
-                        result.get("KEY");
-                        Log.d("TokenActivity", result.toString());
-                    } else {
-                        Log.d("TokenActivity", "null-result");
-                    }
-                } catch (OperationCanceledException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (AuthenticatorException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, new Handler(getMainLooper()));*/
     }
 }

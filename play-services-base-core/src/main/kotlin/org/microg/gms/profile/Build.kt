@@ -24,7 +24,6 @@ object Build {
     var CPU_ABI2: String? = null
 
     @JvmField
-    @TargetApi(21)
     var SUPPORTED_ABIS: Array<String> = emptyArray()
 
     @JvmField

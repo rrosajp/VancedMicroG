@@ -18,6 +18,7 @@ package org.microg.gms.checkin;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.IntentService;
@@ -26,7 +27,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.RemoteException;
 import android.os.ResultReceiver;
 import android.util.Log;
 
@@ -41,6 +41,7 @@ import org.microg.gms.common.ForegroundServiceInfo;
 import org.microg.gms.gcm.McsService;
 import org.microg.gms.people.PeopleManager;
 
+@SuppressLint("NonConstantResourceId")
 @ForegroundServiceInfo(value = "Google device registration", res = R.string.service_name_checkin)
 public class CheckinService extends IntentService {
     private static final String TAG = "GmsCheckinSvc";
@@ -56,17 +57,17 @@ public class CheckinService extends IntentService {
 
     private final ICheckinService iface = new ICheckinService.Stub() {
         @Override
-        public String getDeviceDataVersionInfo() throws RemoteException {
+        public String getDeviceDataVersionInfo() {
             return LastCheckinInfo.read(CheckinService.this).getDeviceDataVersionInfo();
         }
 
         @Override
-        public long getLastCheckinSuccessTime() throws RemoteException {
+        public long getLastCheckinSuccessTime() {
             return LastCheckinInfo.read(CheckinService.this).getLastCheckin();
         }
 
         @Override
-        public String getLastSimOperator() throws RemoteException {
+        public String getLastSimOperator() {
             return null;
         }
     };
@@ -90,7 +91,7 @@ public class CheckinService extends IntentService {
                     }
                     McsService.scheduleReconnect(this);
                     if (intent.hasExtra(EXTRA_CALLBACK_INTENT)) {
-                        startService((Intent) intent.getParcelableExtra(EXTRA_CALLBACK_INTENT));
+                        startService(intent.getParcelableExtra(EXTRA_CALLBACK_INTENT));
                     }
                     if (intent.hasExtra(EXTRA_RESULT_RECEIVER)) {
                         ResultReceiver receiver = intent.getParcelableExtra(EXTRA_RESULT_RECEIVER);
@@ -124,7 +125,7 @@ public class CheckinService extends IntentService {
 
     static void schedule(Context context) {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        PendingIntent pendingIntent = PendingIntent.getService(context, TriggerReceiver.class.getName().hashCode(), new Intent(context, TriggerReceiver.class), PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_UPDATE_CURRENT);
+        @SuppressLint("UnspecifiedImmutableFlag") PendingIntent pendingIntent = PendingIntent.getService(context, TriggerReceiver.class.getName().hashCode(), new Intent(context, TriggerReceiver.class), PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_UPDATE_CURRENT);
         alarmManager.set(AlarmManager.RTC, Math.max(LastCheckinInfo.read(context).getLastCheckin() + REGULAR_CHECKIN_INTERVAL, System.currentTimeMillis() + BACKUP_CHECKIN_DELAY), pendingIntent);
     }
 }

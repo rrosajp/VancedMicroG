@@ -39,12 +39,11 @@ public class GcmLegacyData {
 
     @Deprecated
     public static class LegacyAppInfo implements Comparable<LegacyAppInfo> {
-        public String app = null;
-        public String appSignature = null;
+        public String app;
+        public String appSignature;
         public String registerID = null;
 
         private final int STATE_ERROR = 1;
-        private final int STATE_REMOVED = 2;
         private final int STATE_REGISTERED = 3;
         private final int state;
 
@@ -52,7 +51,7 @@ public class GcmLegacyData {
             if (ERROR.equals(value)) {
                 state = STATE_ERROR;
             } else if (REMOVED.equals(value)) {
-                state = STATE_REMOVED;
+                state = 2;
             } else {
                 state = STATE_REGISTERED;
                 registerID = value;
@@ -64,10 +63,6 @@ public class GcmLegacyData {
 
         public boolean isRegistered() {
             return state == STATE_REGISTERED;
-        }
-
-        public boolean isRemoved() {
-            return state == STATE_REMOVED;
         }
 
         public boolean hasUnregistrationError() {

@@ -18,7 +18,6 @@ package org.microg.gms;
 
 import android.accounts.Account;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.os.Parcel;
 import android.os.RemoteException;
 import android.util.Log;
@@ -59,12 +58,12 @@ public abstract class AbstractGmsServiceBroker extends IGmsServiceBroker.Stub {
     @Override
     public void getAddressService(IGmsCallbacks callback, int versionCode, String packageName)
             throws RemoteException {
-        callGetService(GmsService.ADDRESS, callback, versionCode, packageName);
+        callGetService(callback, versionCode, packageName);
     }
 
-    private void callGetService(GmsService service, IGmsCallbacks callback, int gmsVersion,
+    private void callGetService(IGmsCallbacks callback, int gmsVersion,
                                 String packageName) throws RemoteException {
-        callGetService(service, callback, gmsVersion, packageName, null);
+        callGetService(GmsService.ADDRESS, callback, gmsVersion, packageName, null);
     }
 
     private void callGetService(GmsService service, IGmsCallbacks callback, int gmsVersion,
@@ -104,7 +103,7 @@ public abstract class AbstractGmsServiceBroker extends IGmsServiceBroker.Stub {
     public abstract void handleServiceRequest(IGmsCallbacks callback, GetServiceRequest request, GmsService service) throws RemoteException;
 
     @Override
-    public void validateAccount(IGmsCallbacks callback, ValidateAccountRequest request) throws RemoteException {
+    public void validateAccount(IGmsCallbacks callback, ValidateAccountRequest request) {
         throw new IllegalArgumentException("ValidateAccountRequest not supported");
     }
 

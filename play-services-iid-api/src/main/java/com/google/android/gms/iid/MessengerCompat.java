@@ -16,14 +16,10 @@
 
 package com.google.android.gms.iid;
 
-import android.os.Binder;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
 import android.os.Messenger;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.os.RemoteException;
 
 public class MessengerCompat implements Parcelable {
     private final Messenger messenger;
@@ -31,10 +27,6 @@ public class MessengerCompat implements Parcelable {
 
     public MessengerCompat(IBinder binder) {
         messenger = new Messenger(binder);
-    }
-
-    public MessengerCompat(Handler handler) {
-        messenger = new Messenger(handler);
     }
 
     @Override
@@ -56,10 +48,6 @@ public class MessengerCompat implements Parcelable {
         return getBinder().hashCode();
     }
 
-    public void send(Message message) throws RemoteException {
-        messenger.send(message);
-    }
-
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeStrongBinder(getBinder());
@@ -78,17 +66,4 @@ public class MessengerCompat implements Parcelable {
         }
     };
 
-    private static class IMessengerCompatImpl extends IMessengerCompat.Stub {
-        private final Handler handler;
-
-        public IMessengerCompatImpl(Handler handler) {
-            this.handler = handler;
-        }
-
-        @Override
-        public void send(Message message) throws RemoteException {
-            message.arg2 = Binder.getCallingUid();
-            handler.dispatchMessage(message);
-        }
-    }
 }

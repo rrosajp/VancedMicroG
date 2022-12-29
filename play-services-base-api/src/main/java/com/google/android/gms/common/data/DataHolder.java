@@ -17,11 +17,12 @@
 package com.google.android.gms.common.data;
 
 import android.annotation.SuppressLint;
-import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.CursorWindow;
 import android.os.Bundle;
 import android.os.Parcel;
+
+import androidx.annotation.NonNull;
 
 import org.microg.gms.common.PublicApi;
 import org.microg.safeparcel.AutoSafeParcelable;
@@ -110,7 +111,6 @@ public class DataHolder extends AutoSafeParcelable implements Closeable {
         return builder(columns, null);
     }
 
-    @SuppressWarnings("deprecation")
     @SuppressLint({"NewApi", "ObsoleteSdkInt"})
     static int getCursorType(Cursor cursor, int i) {
         return cursor.getType(i);
@@ -252,6 +252,7 @@ public class DataHolder extends AutoSafeParcelable implements Closeable {
         return windows[windowIndex].getString(row, columnIndices.get(column));
     }
 
+    @NonNull
     @Override
     public String toString() {
         return "DataHolder{" +
@@ -277,13 +278,11 @@ public class DataHolder extends AutoSafeParcelable implements Closeable {
     public static class Builder {
         private final String[] columns;
         private final ArrayList<Map<String, Object>> rows;
-        private final String uniqueColumn;
         private final Map<Object, Integer> uniqueIndizes;
 
         private Builder(String[] columns, String uniqueColumn) {
             this.columns = columns;
             this.rows = new ArrayList<>();
-            this.uniqueColumn = uniqueColumn;
             this.uniqueIndizes = new HashMap<>();
         }
 
@@ -315,46 +314,6 @@ public class DataHolder extends AutoSafeParcelable implements Closeable {
             return rows.size();
         }
 
-        /**
-         * Add a new row of data to the {@link DataHolder} this {@link DataHolder.Builder} will create. Note that the data must contain an entry for all columns
-         * <p/>
-         * Currently the only supported value types that are supported are String, Long, and Boolean (Integer is also accepted and will be stored as a Long).
-         *
-         * @param values {@link ContentValues} containing row data.
-         * @return {@link DataHolder.Builder} to continue construction.
-         */
-        public Builder withRow(ContentValues values) {
-            HashMap<String, Object> row = new HashMap<>();
-            for (Map.Entry<String, Object> entry : values.valueSet()) {
-                row.put(entry.getKey(), entry.getValue());
-            }
-            return withRow(row);
-        }
-
-        /**
-         * Add a new row of data to the {@link DataHolder} this {@link DataHolder.Builder} will create. Note that the data must contain an entry for all columns
-         * <p/>
-         * Currently the only supported value types that are supported are String, Long, and Boolean (Integer is also accepted and will be stored as a Long).
-         *
-         * @param row Map containing row data.
-         * @return {@link DataHolder.Builder} to continue construction.
-         */
-        public Builder withRow(HashMap<String, Object> row) {
-            if (uniqueColumn != null) {
-                Object val = row.get(uniqueColumn);
-                if (val != null) {
-                    Integer old = uniqueIndizes.get(val);
-                    if (old != null) {
-                        rows.set(old, row);
-                        return this;
-                    } else {
-                        uniqueIndizes.put(val, rows.size());
-                    }
-                }
-            }
-            rows.add(row);
-            return this;
-        }
     }
 
     public static final Creator<DataHolder> CREATOR = new AutoCreator<DataHolder>(DataHolder.class) {

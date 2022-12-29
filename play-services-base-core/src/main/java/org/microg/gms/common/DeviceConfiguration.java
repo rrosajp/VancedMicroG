@@ -98,9 +98,8 @@ public class DeviceConfiguration {
         Collections.sort(this.glExtensions);
     }
 
-    @SuppressWarnings({"deprecation", "InlinedApi"})
+    @SuppressWarnings({"InlinedApi"})
     private static List<String> getNativePlatforms() {
-        List<String> nativePlatforms;
         return Arrays.asList(Build.SUPPORTED_ABIS);
     }
 

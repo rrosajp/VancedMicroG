@@ -96,18 +96,18 @@ public class Condition {
             ((ImageView) view.findViewById(android.R.id.icon)).setImageDrawable(icon);
         ((TextView) view.findViewById(android.R.id.title)).setText(getTitle(context));
         ((TextView) view.findViewById(android.R.id.summary)).setText(getSummary(context));
-        Button first = (Button) view.findViewById(R.id.first_action);
+        Button first = view.findViewById(R.id.first_action);
         first.setText(getFirstActionText(context));
         first.setOnClickListener(getFirstActionListener());
         CharSequence secondActionText = getSecondActionText(context);
         if (secondActionText != null) {
-            Button second = (Button) view.findViewById(R.id.second_action);
+            Button second = view.findViewById(R.id.second_action);
             second.setText(secondActionText);
             second.setOnClickListener(getSecondActionListener());
             second.setVisibility(View.VISIBLE);
         }
         final View detailGroup = view.findViewById(R.id.detail_group);
-        final ImageView expandIndicator = (ImageView) view.findViewById(R.id.expand_indicator);
+        final ImageView expandIndicator = view.findViewById(R.id.expand_indicator);
         View.OnClickListener expandListener = v -> {
             if (detailGroup.getVisibility() == View.VISIBLE) {
                 expandIndicator.setImageDrawable(ResourcesCompat.getDrawable(context.getResources(), R.drawable.ic_expand_more, context.getTheme()));
@@ -192,6 +192,7 @@ public class Condition {
 
     public synchronized void evaluate(Context context) {
         active = evaluation == null || evaluation.isActive(context);
+        assert evaluation != null;
         evaluatedPlurals = evaluation.getPluralsCount();
         evaluated = true;
         evaluating = false;
@@ -222,29 +223,40 @@ public class Condition {
         @StringRes
         private int titleRes;
         @PluralsRes
-        private int titlePluralsRes;
+        private final int titlePluralsRes;
         private CharSequence title;
         @StringRes
         private int summaryRes;
         @PluralsRes
-        private int summaryPluralsRes;
+        private final int summaryPluralsRes;
         private CharSequence summary;
         @StringRes
-        private int firstActionTextRes;
+        private final int firstActionTextRes;
         @PluralsRes
-        private int firstActionPluralsRes;
-        private CharSequence firstActionText;
-        private View.OnClickListener firstActionListener;
+        private final int firstActionPluralsRes;
+        private final CharSequence firstActionText;
+        private final View.OnClickListener firstActionListener;
         @StringRes
-        private int secondActionTextRes;
+        private final int secondActionTextRes;
         @PluralsRes
-        private int secondActionPluralsRes;
-        private CharSequence secondActionText;
-        private View.OnClickListener secondActionListener;
-        private Evaluation evaluation;
+        private final int secondActionPluralsRes;
+        private final CharSequence secondActionText;
+        private final View.OnClickListener secondActionListener;
+        private final Evaluation evaluation;
 
 
-        public Builder() {
+        public Builder(int titlePluralsRes, int summaryPluralsRes, int firstActionTextRes, int firstActionPluralsRes, CharSequence firstActionText, View.OnClickListener firstActionListener, int secondActionTextRes, int secondActionPluralsRes, CharSequence secondActionText, View.OnClickListener secondActionListener, Evaluation evaluation) {
+            this.titlePluralsRes = titlePluralsRes;
+            this.summaryPluralsRes = summaryPluralsRes;
+            this.firstActionTextRes = firstActionTextRes;
+            this.firstActionPluralsRes = firstActionPluralsRes;
+            this.firstActionText = firstActionText;
+            this.firstActionListener = firstActionListener;
+            this.secondActionTextRes = secondActionTextRes;
+            this.secondActionPluralsRes = secondActionPluralsRes;
+            this.secondActionText = secondActionText;
+            this.secondActionListener = secondActionListener;
+            this.evaluation = evaluation;
         }
 
         public Builder icon(Drawable val) {
@@ -267,11 +279,6 @@ public class Condition {
             return this;
         }
 
-        public Builder titlePlurals(@PluralsRes int val) {
-            titlePluralsRes = val;
-            return this;
-        }
-
         public Builder summary(CharSequence val) {
             summary = val;
             return this;
@@ -279,52 +286,6 @@ public class Condition {
 
         public Builder summary(@StringRes int val) {
             summaryRes = val;
-            return this;
-        }
-
-        public Builder summaryPlurals(@PluralsRes int val) {
-            summaryPluralsRes = val;
-            return this;
-        }
-
-        public Builder firstAction(CharSequence text, View.OnClickListener listener) {
-            firstActionText = text;
-            firstActionListener = listener;
-            return this;
-        }
-
-        public Builder firstAction(@StringRes int val, View.OnClickListener listener) {
-            firstActionTextRes = val;
-            firstActionListener = listener;
-            return this;
-        }
-
-        public Builder firstActionPlurals(@PluralsRes int val, View.OnClickListener listener) {
-            firstActionPluralsRes = val;
-            firstActionListener = listener;
-            return this;
-        }
-
-        public Builder secondAction(CharSequence text, View.OnClickListener listener) {
-            secondActionText = text;
-            secondActionListener = listener;
-            return this;
-        }
-
-        public Builder secondAction(@StringRes int val, View.OnClickListener listener) {
-            secondActionTextRes = val;
-            secondActionListener = listener;
-            return this;
-        }
-
-        public Builder secondActionPlurals(@PluralsRes int val, View.OnClickListener listener) {
-            secondActionPluralsRes = val;
-            secondActionListener = listener;
-            return this;
-        }
-
-        public Builder evaluation(Evaluation evaluation) {
-            this.evaluation = evaluation;
             return this;
         }
 

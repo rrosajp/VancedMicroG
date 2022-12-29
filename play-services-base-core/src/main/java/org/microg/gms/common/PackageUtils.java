@@ -16,6 +16,7 @@
 
 package org.microg.gms.common;
 
+import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.app.Application;
 import android.app.PendingIntent;
@@ -35,8 +36,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-import static android.os.Build.VERSION.SDK_INT;
 import static org.microg.gms.common.Constants.GMS_PACKAGE_NAME;
 import static org.microg.gms.common.Constants.GMS_PACKAGE_SIGNATURE_SHA1;
 import static org.microg.gms.common.Constants.GMS_SECONDARY_PACKAGE_SIGNATURE_SHA1;
@@ -73,7 +74,7 @@ public class PackageUtils {
         if (signatureDigest == null) return false;
         if (Arrays.asList(GOOGLE_PRIMARY_KEYS).contains(signatureDigest)) return true;
         if (!KNOWN_GOOGLE_PACKAGES.containsKey(packageName)) return false;
-        return KNOWN_GOOGLE_PACKAGES.get(packageName).equals(signatureDigest);
+        return Objects.equals(KNOWN_GOOGLE_PACKAGES.get(packageName), signatureDigest);
     }
 
     public static void assertExtendedAccess(Context context) {
@@ -102,6 +103,7 @@ public class PackageUtils {
         return firstSignatureDigest(context.getPackageManager(), packageName);
     }
 
+    @SuppressLint("PackageManagerGetSignatures")
     @Nullable
     public static String firstSignatureDigest(PackageManager packageManager, String packageName) {
         if (packageName.equals("com.google.android.apps.youtube.music") || packageName.contains("youtube.music")) {
@@ -139,6 +141,7 @@ public class PackageUtils {
         return firstSignatureDigestBytes(context.getPackageManager(), packageName);
     }
 
+    @SuppressLint("PackageManagerGetSignatures")
     @Nullable
     public static byte[] firstSignatureDigestBytes(PackageManager packageManager, String packageName) {
         final PackageInfo info;
@@ -159,18 +162,6 @@ public class PackageUtils {
         return null;
     }
 
-    @Nullable
-    public static String getCallingPackage(Context context) {
-        int callingUid = Binder.getCallingUid(), callingPid = Binder.getCallingPid();
-        String packageName = packageFromProcessId(context, callingPid);
-        if (packageName == null) {
-            packageName = firstPackageFromUserId(context, callingUid);
-        }
-
-        // spoof or use real one
-        return PackageSpoofUtils.spoofPackageName(context.getPackageManager(), packageName);
-    }
-
     public static byte[] sha1bytes(byte[] bytes) {
         MessageDigest md;
         try {
@@ -178,32 +169,12 @@ public class PackageUtils {
         } catch (final NoSuchAlgorithmException e) {
             return null;
         }
-        if (md != null) {
-            return md.digest(bytes);
-        }
-        return null;
+        return md.digest(bytes);
     }
 
     @Nullable
     public static String getAndCheckCallingPackage(Context context, String suggestedPackageName) {
         return getAndCheckCallingPackage(context, suggestedPackageName, 0);
-    }
-
-    @Nullable
-    public static String getAndCheckCallingPackageOrExtendedAccess(Context context, String suggestedPackageName) {
-        try {
-            return getAndCheckCallingPackage(context, suggestedPackageName, 0);
-        } catch (Exception e) {
-            if (callerHasExtendedAccess(context)) {
-                return suggestedPackageName;
-            }
-            throw e;
-        }
-    }
-
-    @Nullable
-    public static String getAndCheckCallingPackage(Context context, int suggestedCallerUid) {
-        return getAndCheckCallingPackage(context, null, suggestedCallerUid);
     }
 
     @Nullable
@@ -221,11 +192,6 @@ public class PackageUtils {
             throw new SecurityException("suggested PID [" + suggestedCallerPid + "] and real calling PID [" + callingPid + "] mismatch!");
         }
         return getAndCheckPackage(context, suggestedPackageName, callingUid, Binder.getCallingPid());
-    }
-
-    @Nullable
-    public static String getAndCheckPackage(Context context, String suggestedPackageName, int callingUid) {
-        return getAndCheckPackage(context, suggestedPackageName, callingUid, 0);
     }
 
     @Nullable
@@ -268,16 +234,6 @@ public class PackageUtils {
         return null;
     }
 
-    @Nullable
-    public static String firstPackageFromUserId(Context context, int uid) {
-        String[] packagesForUid = context.getPackageManager().getPackagesForUid(uid);
-        if (packagesForUid != null && packagesForUid.length != 0) {
-            return packagesForUid[0];
-        }
-        return null;
-    }
-
-    @SuppressWarnings("deprecation")
     public static String packageFromPendingIntent(PendingIntent pi) {
         if (pi == null) return null;
         return pi.getCreatorPackage();
@@ -287,9 +243,9 @@ public class PackageUtils {
         if (android.os.Build.VERSION.SDK_INT >= 28)
             return Application.getProcessName();
         try {
-            Class<?> activityThread = Class.forName("android.app.ActivityThread");
+            @SuppressLint("PrivateApi") Class<?> activityThread = Class.forName("android.app.ActivityThread");
             String methodName = "currentProcessName";
-            Method getProcessName = activityThread.getDeclaredMethod(methodName);
+            @SuppressLint("DiscouragedPrivateApi") Method getProcessName = activityThread.getDeclaredMethod(methodName);
             return (String) getProcessName.invoke(null);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -333,17 +289,12 @@ public class PackageUtils {
         } catch (final NoSuchAlgorithmException e) {
             return null;
         }
-        if (md != null) {
-            bytes = md.digest(bytes);
-            if (bytes != null) {
-                StringBuilder sb = new StringBuilder(2 * bytes.length);
-                for (byte b : bytes) {
-                    sb.append(String.format("%02x", b));
-                }
-                return sb.toString();
-            }
+        bytes = md.digest(bytes);
+        StringBuilder sb = new StringBuilder(2 * bytes.length);
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
         }
-        return null;
+        return sb.toString();
     }
 
     public static int versionCode(Context context, String packageName) {

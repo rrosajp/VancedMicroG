@@ -20,7 +20,7 @@ import org.microg.gms.checkin.setCheckinServiceConfiguration
 class DeviceRegistrationFragment : Fragment(R.layout.device_registration_fragment) {
     private lateinit var binding: DeviceRegistrationFragmentBinding
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         binding = DeviceRegistrationFragmentBinding.inflate(inflater, container, false)
         binding.switchBarCallback = object : PreferenceSwitchBarCallback {
             override fun onChecked(newStatus: Boolean) {

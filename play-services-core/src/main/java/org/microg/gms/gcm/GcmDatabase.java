@@ -10,15 +10,12 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.os.Build;
-import android.text.TextUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class GcmDatabase extends SQLiteOpenHelper {
-    private static final String TAG = GcmDatabase.class.getSimpleName();
     public static final String DB_NAME = "gcmstatus";
     private static final int DB_VERSION = 1;
     private static final String CREATE_TABLE_APPS = "CREATE TABLE apps (" +
@@ -55,9 +52,7 @@ public class GcmDatabase extends SQLiteOpenHelper {
     public GcmDatabase(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
         this.context = context;
-        if (Build.VERSION.SDK_INT >= 16) {
-            this.setWriteAheadLoggingEnabled(true);
-        }
+        this.setWriteAheadLoggingEnabled(true);
     }
 
     public static class App {
@@ -79,9 +74,6 @@ public class GcmDatabase extends SQLiteOpenHelper {
             wakeForDelivery = cursor.getLong(cursor.getColumnIndexOrThrow(FIELD_WAKE_FOR_DELIVERY)) == 1;
         }
 
-        public boolean hasError() {
-            return !TextUtils.isEmpty(lastError);
-        }
     }
 
     public static class Registration {
@@ -176,24 +168,6 @@ public class GcmDatabase extends SQLiteOpenHelper {
         db.update(TABLE_APPS, cv, FIELD_PACKAGE_NAME + " LIKE ?", new String[]{packageName});
     }
 
-    public synchronized void noteAppKnown(String packageName, boolean allowRegister) {
-        SQLiteDatabase db = getWritableDatabase();
-        db.beginTransaction();
-
-        App app = getApp(db, packageName);
-        ContentValues cv = new ContentValues();
-        cv.put(FIELD_ALLOW_REGISTER, allowRegister);
-        if (app == null) {
-            cv.put(FIELD_PACKAGE_NAME, packageName);
-            db.insert(TABLE_APPS, null, cv);
-        } else {
-            db.update(TABLE_APPS, cv, FIELD_PACKAGE_NAME + " LIKE ?", new String[]{packageName});
-        }
-
-        db.setTransactionSuccessful();
-        db.endTransaction();
-    }
-
     public synchronized void noteAppMessage(String packageName, int numBytes) {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
@@ -221,17 +195,16 @@ public class GcmDatabase extends SQLiteOpenHelper {
         db.beginTransaction();
 
         App app = getApp(db, packageName);
+        ContentValues cv = new ContentValues();
         if (app == null) {
-            ContentValues cv = new ContentValues();
             cv.put(FIELD_PACKAGE_NAME, packageName);
             db.insert(TABLE_APPS, null, cv);
         } else {
-            ContentValues cv = new ContentValues();
             cv.put(FIELD_LAST_ERROR, "");
             db.update(TABLE_APPS, cv, FIELD_PACKAGE_NAME + " LIKE ?", new String[]{packageName});
         }
 
-        ContentValues cv = new ContentValues();
+        cv = new ContentValues();
         cv.put(FIELD_PACKAGE_NAME, packageName);
         cv.put(FIELD_SIGNATURE, signature);
         cv.put(FIELD_REGISTER_ID, registrationId);

@@ -35,12 +35,6 @@ import java.util.Map;
 
 public class RegisterRequest extends HttpFormClient.Request {
     private static final String SERVICE_URL = "https://android.clients.google.com/c2dm/register3";
-    private static final String USER_AGENT = "Android-GCM/1.5 (%s %s)";
-
-    @RequestHeader("Authorization")
-    private String auth;
-    @RequestHeader("User-Agent")
-    private String userAgent;
 
     @RequestHeader("app")
     @RequestContent("app")
@@ -67,8 +61,6 @@ public class RegisterRequest extends HttpFormClient.Request {
 
     @Override
     public void prepare() {
-        userAgent = String.format(USER_AGENT, deviceName, buildVersion);
-        auth = "AidLogin " + androidId + ":" + securityToken;
     }
 
     public RegisterRequest checkin(LastCheckinInfo lastCheckinInfo) {

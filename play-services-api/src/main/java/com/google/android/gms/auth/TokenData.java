@@ -24,8 +24,6 @@ import org.microg.safeparcel.SafeParceled;
 import java.util.List;
 
 public class TokenData extends AutoSafeParcelable {
-    @SafeParceled(1)
-    private final int versionCode = 1;
 
     @SafeParceled(2)
     public final String token;
@@ -39,13 +37,6 @@ public class TokenData extends AutoSafeParcelable {
     @SafeParceled(value = 6, subClass = Scope.class)
     public final List<Scope> scopes;
 
-    public TokenData() {
-        token = null;
-        expiry = null;
-        isOAuth = false;
-        scopes = null;
-    }
-
     public TokenData(String token, Long expiry, boolean isOAuth, List<Scope> scopes) {
         this.token = token;
         this.expiry = expiry;
@@ -53,12 +44,5 @@ public class TokenData extends AutoSafeParcelable {
         this.scopes = scopes;
     }
 
-    public TokenData(String token, Long expiry) {
-        this.token = token;
-        this.expiry = expiry;
-        this.isOAuth = false;
-        this.scopes = null;
-    }
-
-    public static final Creator<TokenData> CREATOR = new AutoCreator<TokenData>(TokenData.class);
+    public static final Creator<TokenData> CREATOR = new AutoCreator<>(TokenData.class);
 }

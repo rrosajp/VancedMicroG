@@ -68,13 +68,13 @@ public class SwitchBar extends LinearLayout implements CompoundButton.OnCheckedC
 
         LayoutInflater.from(context).inflate(R.layout.switch_bar, this);
 
-        mTextView = (TextView) findViewById(R.id.switch_text);
+        mTextView = findViewById(R.id.switch_text);
         mTextView.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
         mLabel = getResources().getString(R.string.abc_capital_off);
         mSummarySpan = new TextAppearanceSpan(context, androidx.appcompat.R.style.TextAppearance_AppCompat_Widget_Switch);
         updateText();
 
-        mSwitch = (ToggleSwitch) findViewById(R.id.switch_widget);
+        mSwitch = findViewById(R.id.switch_widget);
         // Prevent onSaveInstanceState() to be called as we are managing the state of the Switch
         // on our own
         mSwitch.setSaveEnabled(false);

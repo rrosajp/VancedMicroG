@@ -16,37 +16,11 @@ import org.microg.safeparcel.AutoSafeParcelable;
  */
 public class CredentialRequest extends AutoSafeParcelable {
 
-    @Field(1000)
-    private final int versionCode = 1;
-
     @Field(1)
-    private boolean passwordLoginSupported;
-    @Field(2)
-    private String[] accountTypes;
-    @Field(3)
-    private CredentialPickerConfig credentialPickerConfig;
-    @Field(4)
-    private CredentialPickerConfig credentialHintPickerConfig;
+    private final boolean passwordLoginSupported;
 
-    private CredentialRequest() { }
-
-    public CredentialRequest(boolean passwordLoginSupported, String[] accountTypes, CredentialPickerConfig credentialPickerConfig, CredentialPickerConfig credentialHintPickerConfig) {
+    public CredentialRequest(boolean passwordLoginSupported) {
         this.passwordLoginSupported = passwordLoginSupported;
-        this.accountTypes = accountTypes;
-        this.credentialPickerConfig = credentialPickerConfig;
-        this.credentialHintPickerConfig = credentialHintPickerConfig;
-    }
-
-    public String[] getAccountTypes() {
-        return accountTypes;
-    }
-
-    public CredentialPickerConfig getCredentialHintPickerConfig() {
-        return credentialHintPickerConfig;
-    }
-
-    public CredentialPickerConfig getCredentialPickerConfig() {
-        return credentialPickerConfig;
     }
 
     /**
@@ -65,12 +39,11 @@ public class CredentialRequest extends AutoSafeParcelable {
 
     public static class Builder {
         private boolean passwordLoginSupported;
-        private String[] accountTypes;
         private CredentialPickerConfig credentialPickerConfig;
         private CredentialPickerConfig credentialHintPickerConfig;
 
-        public void setAccountTypes(String... accountTypes) {
-            this.accountTypes = accountTypes.clone();
+        public Builder() {
         }
+
     }
 }

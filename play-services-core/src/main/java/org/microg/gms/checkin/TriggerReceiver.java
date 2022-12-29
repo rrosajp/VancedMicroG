@@ -18,10 +18,10 @@ package org.microg.gms.checkin;
 
 import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
-import static android.os.Build.VERSION.SDK_INT;
 import static org.microg.gms.checkin.CheckinService.EXTRA_FORCE_CHECKIN;
 import static org.microg.gms.checkin.CheckinService.REGULAR_CHECKIN_INTERVAL;
 
+import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -54,13 +54,13 @@ public class TriggerReceiver extends WakefulBroadcastReceiver {
                     Intent subIntent = new Intent(context, CheckinService.class);
                     subIntent.putExtra(EXTRA_FORCE_CHECKIN, force);
                     startWakefulService(new ForegroundServiceContext(context), subIntent);
-                } else if (SDK_INT >= 23) {
+                } else {
                     // no network, register a network callback to retry when we have internet
                     NetworkRequest networkRequest = new NetworkRequest.Builder()
                             .addCapability(NET_CAPABILITY_INTERNET)
                             .build();
                     Intent i = new Intent(context, TriggerReceiver.class);
-                    PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, i, FLAG_UPDATE_CURRENT);
+                    @SuppressLint("UnspecifiedImmutableFlag") PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, i, FLAG_UPDATE_CURRENT);
                     cm.registerNetworkCallback(networkRequest, pendingIntent);
                 }
             } else {

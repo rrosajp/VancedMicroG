@@ -75,7 +75,7 @@ public class ForegroundServiceContext extends ContextWrapper {
             String serviceName = getServiceName(service);
             Log.d(tag, "Started " + serviceName + " in foreground mode.");
             try {
-                Notification notification = buildForegroundNotification(service, serviceName);
+                Notification notification = buildForegroundNotification(service);
                 service.startForeground(serviceName.hashCode(), notification);
                 Log.d(tag, "Notification: " + notification);
             } catch (Exception e) {
@@ -85,7 +85,7 @@ public class ForegroundServiceContext extends ContextWrapper {
     }
 
     @SuppressLint("BatteryLife")
-    private static Notification buildForegroundNotification(Context context, String serviceName) {
+    private static Notification buildForegroundNotification(Context context) {
         Intent notificationIntent = new Intent();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             notificationIntent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);

@@ -54,7 +54,6 @@ public class McsInputStream extends Thread implements Closeable {
     private int version = -1;
     private int lastStreamIdReported = -1;
     private int streamId = 0;
-    private final long lastMsgTime = 0;
 
     private volatile boolean closed = false;
 
@@ -141,14 +140,14 @@ public class McsInputStream extends Thread implements Closeable {
         while (len < mcsSize && read >= 0) {
             len += (read = is.read(bytes, len, mcsSize - len)) < 0 ? 0 : read;
         }
-        Message message = read(mcsTag, bytes, len);
+        Message message = read(mcsTag, bytes);
         if (message == null) return null;
         Log.d(TAG, "Incoming message: " + message);
         streamId++;
         return mainHandler.obtainMessage(MSG_INPUT, mcsTag, streamId, message);
     }
 
-    private static Message read(int mcsTag, byte[] bytes, int len) throws IOException {
+    private static Message read(int mcsTag, byte[] bytes) throws IOException {
         try {
             switch (mcsTag) {
                 case MCS_HEARTBEAT_PING_TAG:

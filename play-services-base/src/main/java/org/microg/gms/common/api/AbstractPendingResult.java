@@ -31,7 +31,6 @@ public class AbstractPendingResult<R extends Result> implements PendingResult<R>
     private final ResultCallbackHandler<R> handler;
     private boolean canceled;
     private R result;
-    private ResultCallback<R> resultCallback;
 
     public AbstractPendingResult(Looper looper) {
         handler = new ResultCallbackHandler<>(looper);
@@ -84,7 +83,7 @@ public class AbstractPendingResult<R extends Result> implements PendingResult<R>
                 if (isReady()) {
                     handler.sendResultCallback(callback, getResult());
                 } else {
-                    handler.sendTimeoutResultCallback(this, unit.toMillis(time));
+                    handler.sendTimeoutResultCallback(unit.toMillis(time));
                 }
             }
         }
@@ -96,8 +95,6 @@ public class AbstractPendingResult<R extends Result> implements PendingResult<R>
             if (!isCanceled()) {
                 if (isReady()) {
                     handler.sendResultCallback(callback, getResult());
-                } else {
-                    resultCallback = callback;
                 }
             }
         }

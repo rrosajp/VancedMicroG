@@ -24,13 +24,12 @@ import android.net.Uri;
 public class GServices {
     public static final Uri CONTENT_URI = Uri.parse("content://com.mgoogle.android.gsf.gservices");
     public static final Uri MAIN_URI = Uri.parse("content://com.mgoogle.android.gsf.gservices/main");
-    public static final Uri OVERRIDE_URI = Uri.parse("content://com.mgoogle.android.gsf.gservices/override");
 
-    public static int setString(ContentResolver resolver, String key, String value) {
+    public static void setString(ContentResolver resolver, String key, String value) {
         ContentValues values = new ContentValues();
         values.put("name", key);
         values.put("value", value);
-        return resolver.update(MAIN_URI, values, null, null);
+        resolver.update(MAIN_URI, values, null, null);
     }
 
     public static String getString(ContentResolver resolver, String key) {
@@ -49,25 +48,4 @@ public class GServices {
         return result;
     }
 
-    public static int getInt(ContentResolver resolver, String key, int defaultValue) {
-        String result = getString(resolver, key);
-        if (result != null) {
-            try {
-                return Integer.parseInt(result);
-            } catch (NumberFormatException ignored) {
-            }
-        }
-        return defaultValue;
-    }
-
-    public static long getLong(ContentResolver resolver, String key, long defaultValue) {
-        String result = getString(resolver, key);
-        if (result != null) {
-            try {
-                return Long.parseLong(result);
-            } catch (NumberFormatException ignored) {
-            }
-        }
-        return defaultValue;
-    }
 }

@@ -86,7 +86,7 @@ public class PeopleServiceImpl extends IPeopleService.Stub {
     }
 
     @Override
-    public void loadCircles(IPeopleCallbacks callbacks, String account, String pageGaiaId, String circleId, int type, String var6, boolean var7) throws RemoteException {
+    public void loadCircles(IPeopleCallbacks callbacks, String account, String pageGaiaId, String circleId, int type, String var6, boolean var7) {
         Log.d(TAG, "loadCircles: " + account + ", " + pageGaiaId + ", " + circleId + ", " + type + ", " + var6 + ", " + var7);
         PackageUtils.assertExtendedAccess(context);
         try {
@@ -107,7 +107,7 @@ public class PeopleServiceImpl extends IPeopleService.Stub {
     }
 
     @Override
-    public Bundle requestSync(String account, String var2, long var3, boolean var5, boolean var6) throws RemoteException {
+    public Bundle requestSync(String account, String var2, long var3, boolean var5, boolean var6) {
         Log.d(TAG, "requestSync: " + account + ", " + var2 + ", " + var3 + ", " + var5 + ", " + var6);
         return null;
     }
@@ -135,7 +135,7 @@ public class PeopleServiceImpl extends IPeopleService.Stub {
         thread.start();
         return new ICancelToken.Stub() {
             @Override
-            public void cancel() throws RemoteException {
+            public void cancel() {
                 thread.interrupt();
             }
         };

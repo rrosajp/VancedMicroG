@@ -57,7 +57,6 @@ import org.microg.gms.common.ForegroundServiceContext;
 import org.microg.gms.common.ForegroundServiceInfo;
 import org.microg.gms.common.PackageUtils;
 import org.microg.gms.gcm.mcs.AppData;
-import org.microg.gms.gcm.mcs.Close;
 import org.microg.gms.gcm.mcs.DataMessageStanza;
 import org.microg.gms.gcm.mcs.Extension;
 import org.microg.gms.gcm.mcs.HeartbeatAck;
@@ -82,6 +81,7 @@ import javax.net.ssl.SSLContext;
 
 import okio.ByteString;
 
+@SuppressLint("NonConstantResourceId")
 @ForegroundServiceInfo(value = "Cloud messaging", res = R.string.service_name_mcs)
 public class McsService extends Service implements Handler.Callback {
     private static final String TAG = "GmsGcmMcsSvc";
@@ -126,8 +126,6 @@ public class McsService extends Service implements Handler.Callback {
     private static long currentDelay = 0;
 
     private Intent connectIntent;
-
-    private static final int maxTtl = 24 * 60 * 60;
 
     @Nullable
     private Method getUserIdMethod;
@@ -197,6 +195,7 @@ public class McsService extends Service implements Handler.Callback {
                         deviceIdleController = Class.forName("android.os.IDeviceIdleController$Stub")
                                 .getMethod("asInterface", IBinder.class).invoke(null, binder);
                         getUserIdMethod = UserHandle.class.getMethod("getUserId", int.class);
+                        assert deviceIdleController != null;
                         addPowerSaveTempWhitelistAppMethod = deviceIdleController.getClass()
                                 .getMethod("addPowerSaveTempWhitelistApp", String.class, long.class, int.class, String.class);
                     }
@@ -332,7 +331,6 @@ public class McsService extends Service implements Handler.Callback {
             packageName = PackageUtils.packageFromPendingIntent((PendingIntent) app);
         }
         if (packageName == null) {
-            Log.w(TAG, "Failed to send message, missing package name");
             return;
         }
         if (packageName.equals(getPackageName()) && intent.hasExtra(EXTRA_APP_OVERRIDE)) {
@@ -367,7 +365,6 @@ public class McsService extends Service implements Handler.Callback {
             if (reg != null) from = reg.registerId;
         }
         if (from == null) {
-            Log.e(TAG, "Can't send message, missing from!");
             return;
         }
 
@@ -408,7 +405,7 @@ public class McsService extends Service implements Handler.Callback {
         }
     }
 
-    private boolean connect(int port) {
+    private void connect(int port) {
         try {
             wasTornDown = false;
 
@@ -431,10 +428,8 @@ public class McsService extends Service implements Handler.Callback {
             Log.w(TAG, "Exception while connecting to " + SERVICE_HOST + ":" + port, e);
             rootHandler.sendMessage(rootHandler.obtainMessage(MSG_TEARDOWN, e));
             closeAll();
-            return false;
         }
 
-        return true;
     }
 
     private synchronized void connect() {
@@ -469,7 +464,7 @@ public class McsService extends Service implements Handler.Callback {
         rootHandler.sendMessage(rootHandler.obtainMessage(MSG_TEARDOWN, exception));
     }
 
-    private void handleClose(Close close) {
+    private void handleClose() {
         throw new RuntimeException("Server requested close!");
     }
 
@@ -502,7 +497,7 @@ public class McsService extends Service implements Handler.Callback {
         send(MCS_HEARTBEAT_ACK_TAG, ack.build());
     }
 
-    private void handleHeartbeatAck(HeartbeatAck ack) {
+    private void handleHeartbeatAck() {
         GcmPrefs.get(this).learnReached(this, activeNetworkPref, SystemClock.elapsedRealtime() - lastIncomingNetworkRealtime);
         lastHeartbeatAckElapsedRealtime = SystemClock.elapsedRealtime();
         wakeLock.release();
@@ -633,12 +628,12 @@ public class McsService extends Service implements Handler.Callback {
         rootHandler.sendMessage(rootHandler.obtainMessage(MSG_OUTPUT, type, 0, message));
     }
 
-    private void sendOutputStream(int what, int arg, Object obj) {
+    private void sendOutputStream(int arg, Object obj) {
         McsOutputStream os = outputStream;
         if (os != null && os.isAlive()) {
             Handler outputHandler = os.getHandler();
             if (outputHandler != null)
-                outputHandler.sendMessage(outputHandler.obtainMessage(what, arg, 0, obj));
+                outputHandler.sendMessage(outputHandler.obtainMessage(McsConstants.MSG_OUTPUT, arg, 0, obj));
         }
     }
 
@@ -649,7 +644,7 @@ public class McsService extends Service implements Handler.Callback {
                 handleInput(msg.arg1, (Message) msg.obj);
                 return true;
             case MSG_OUTPUT:
-                sendOutputStream(MSG_OUTPUT, msg.arg1, msg.obj);
+                sendOutputStream(msg.arg1, msg.obj);
                 return true;
             case MSG_INPUT_ERROR:
             case MSG_OUTPUT_ERROR:
@@ -664,7 +659,7 @@ public class McsService extends Service implements Handler.Callback {
                 return true;
             case MSG_TEARDOWN:
                 logd(this, "Teardown initiated, reason: " + msg.obj);
-                handleTeardown(msg);
+                handleTeardown();
                 return true;
             case MSG_CONNECT:
                 logd(this, "Connect initiated, reason: " + msg.obj);
@@ -731,10 +726,10 @@ public class McsService extends Service implements Handler.Callback {
                     handleHeartbeatPing((HeartbeatPing) message);
                     break;
                 case MCS_HEARTBEAT_ACK_TAG:
-                    handleHeartbeatAck((HeartbeatAck) message);
+                    handleHeartbeatAck();
                     break;
                 case MCS_CLOSE_TAG:
-                    handleClose((Close) message);
+                    handleClose();
                     break;
                 case MCS_LOGIN_RESPONSE_TAG:
                     handleLoginResponse((LoginResponse) message);
@@ -771,7 +766,7 @@ public class McsService extends Service implements Handler.Callback {
         }
     }
 
-    private void handleTeardown(android.os.Message msg) {
+    private void handleTeardown() {
         if (wasTornDown) {
             // This can get called multiple times from different places via MSG_TEARDOWN
             // this causes the reconnect delay to increase with each call to scheduleReconnect(),
