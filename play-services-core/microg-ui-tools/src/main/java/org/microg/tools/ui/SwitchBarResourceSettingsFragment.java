@@ -18,33 +18,30 @@ package org.microg.tools.ui;
 
 import android.os.Bundle;
 
-import androidx.appcompat.widget.SwitchCompat;
+import com.google.android.material.switchmaterial.SwitchMaterial;
 
 public abstract class SwitchBarResourceSettingsFragment extends ResourceSettingsFragment implements SwitchBar.OnSwitchChangeListener {
-    protected SwitchBar switchBar;
-    private SwitchCompat switchCompat;
+    private final SwitchMaterial switchMaterial;
     private boolean listenerSetup = false;
+
+    protected SwitchBarResourceSettingsFragment(SwitchMaterial switchMaterial) {
+        this.switchMaterial = switchMaterial;
+    }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
-//        switchBar = activity.getSwitchBar();
-//        switchBar.show();
-//        switchCompat = switchBar.getSwitch();
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-//        switchBar.hide();
     }
 
     @Override
     public void onResume() {
         super.onResume();
         if (!listenerSetup) {
-//            switchBar.addOnSwitchChangeListener(this);
             listenerSetup = true;
         }
     }
@@ -52,15 +49,14 @@ public abstract class SwitchBarResourceSettingsFragment extends ResourceSettings
     @Override
     public void onPause() {
         if (listenerSetup) {
-//            switchBar.removeOnSwitchChangeListener(this);
             listenerSetup = false;
         }
         super.onPause();
     }
 
     @Override
-    public void onSwitchChanged(SwitchCompat switchView, boolean isChecked) {
-        if (switchView == switchCompat) {
+    public void onSwitchChanged(SwitchMaterial switchView, boolean isChecked) {
+        if (switchView == switchMaterial) {
             onSwitchBarChanged(isChecked);
         }
     }

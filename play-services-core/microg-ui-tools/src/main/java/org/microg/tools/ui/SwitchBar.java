@@ -17,10 +17,7 @@
 
 package org.microg.tools.ui;
 
-import static android.os.Build.VERSION.SDK_INT;
-
 import android.content.Context;
-import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.text.SpannableStringBuilder;
@@ -33,7 +30,9 @@ import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import androidx.appcompat.widget.SwitchCompat;
+import androidx.annotation.NonNull;
+
+import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.util.ArrayList;
 
@@ -47,7 +46,7 @@ public class SwitchBar extends LinearLayout implements CompoundButton.OnCheckedC
          * @param switchView The Switch view whose state has changed.
          * @param isChecked  The new checked state of switchView.
          */
-        void onSwitchChanged(SwitchCompat switchView, boolean isChecked);
+        void onSwitchChanged(SwitchMaterial switchView, boolean isChecked);
     }
 
     private final TextAppearanceSpan mSummarySpan;
@@ -70,9 +69,7 @@ public class SwitchBar extends LinearLayout implements CompoundButton.OnCheckedC
         LayoutInflater.from(context).inflate(R.layout.switch_bar, this);
 
         mTextView = (TextView) findViewById(R.id.switch_text);
-        if (SDK_INT > Build.VERSION_CODES.JELLY_BEAN) {
-            mTextView.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
-        }
+        mTextView.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
         mLabel = getResources().getString(R.string.abc_capital_off);
         mSummarySpan = new TextAppearanceSpan(context, androidx.appcompat.R.style.TextAppearance_AppCompat_Widget_Switch);
         updateText();
@@ -81,9 +78,7 @@ public class SwitchBar extends LinearLayout implements CompoundButton.OnCheckedC
         // Prevent onSaveInstanceState() to be called as we are managing the state of the Switch
         // on our own
         mSwitch.setSaveEnabled(false);
-        if (SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            mSwitch.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
-        }
+        mSwitch.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
 
         addOnSwitchChangeListener((switchView, isChecked) -> setTextViewLabel(isChecked));
 
@@ -214,6 +209,7 @@ public class SwitchBar extends LinearLayout implements CompoundButton.OnCheckedC
             out.writeValue(visible);
         }
 
+        @NonNull
         @Override
         public String toString() {
             return "SwitchBar.SavedState{"
