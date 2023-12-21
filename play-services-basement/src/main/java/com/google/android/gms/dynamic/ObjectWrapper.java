@@ -18,6 +18,7 @@ package com.google.android.gms.dynamic;
 
 import android.os.IBinder;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.lang.reflect.Field;
@@ -34,15 +35,14 @@ public class ObjectWrapper<T> extends IObjectWrapper.Stub {
         if (obj == null) {
             return null;
         }
+
         if (obj instanceof ObjectWrapper) {
-            return ((ObjectWrapper) obj).t;
+            return ((ObjectWrapper<?>) obj).t;
         }
+
         IBinder binder = obj.asBinder();
-        Field[] fields = binder.getClass().getDeclaredFields();
-        if (fields.length != 1) {
-            throw new IllegalArgumentException();
-        }
-        Field field = fields[0];
+        Field field = getField(binder);
+
         if (!field.isAccessible()) {
             field.setAccessible(true);
             try {
@@ -60,6 +60,35 @@ public class ObjectWrapper<T> extends IObjectWrapper.Stub {
         } else {
             throw new IllegalArgumentException();
         }
+    }
+
+    @NonNull
+    private static Field getField(IBinder binder) {
+        Field[] fields = binder.getClass().getDeclaredFields();
+
+        if (fields.length < 1) {
+            throw new IllegalArgumentException("No fields were found");
+        }
+
+        @Nullable
+        Field field = null;
+
+        for (Field currentField : fields) {
+            if (currentField.isSynthetic()) {
+                continue;
+            }
+
+            if (field == null) {
+                field = currentField;
+            } else {
+                throw new IllegalArgumentException("Too many non-synthetic fields were found");
+            }
+        }
+
+        if (field == null) {
+            throw new IllegalArgumentException("No non-synthetic fields were found");
+        }
+        return field;
     }
 
     @Nullable
