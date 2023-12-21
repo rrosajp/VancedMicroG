@@ -51,7 +51,7 @@ private suspend fun ensureCheckinIsUpToDate(context: Context) {
     }
 }
 
-private suspend fun ensureAppRegistrationAllowed(context: Context, database: GcmDatabase, packageName: String) {
+private fun ensureAppRegistrationAllowed(context: Context, database: GcmDatabase, packageName: String) {
     if (!GcmPrefs.get(context).isEnabled) throw RuntimeException("GCM disabled")
     val app = database.getApp(packageName)
     if (app?.allowRegister == false) {
@@ -65,7 +65,7 @@ suspend fun completeRegisterRequest(context: Context, database: GcmDatabase, req
 
 private val Intent.requestId: String?
     get() {
-        val kidString = getStringExtra(GcmConstants.EXTRA_KID) ?: return null
+        val kidString = getStringExtra(EXTRA_KID) ?: return null
         if (kidString.startsWith("|")) {
             val kid = kidString.split("\\|".toRegex()).toTypedArray()
             if (kid.size >= 3 && "ID" == kid[1]) {
@@ -188,8 +188,7 @@ class PushRegisterService : LifecycleService() {
     }
 }
 
-internal class PushRegisterHandler(private val context: Context, private val database: GcmDatabase, private val lifecycle: Lifecycle) : Handler(), LifecycleOwner {
-    override fun getLifecycle(): Lifecycle = lifecycle
+internal class PushRegisterHandler(private val context: Context, private val database: GcmDatabase, override val lifecycle: Lifecycle) : Handler(), LifecycleOwner {
 
     private var callingUid = 0
     override fun sendMessageAtTime(msg: Message, uptimeMillis: Long): Boolean {
@@ -245,7 +244,7 @@ internal class PushRegisterHandler(private val context: Context, private val dat
         get() {
             val intent = Intent()
             intent.setPackage("com.google.example.invalidpackage")
-            return PendingIntent.getBroadcast(context, 0, intent, 0)
+            return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
         }
 
     override fun handleMessage(msg: Message) {

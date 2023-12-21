@@ -404,7 +404,7 @@ public class McsService extends Service implements Handler.Callback {
             if (!key.startsWith("google.")) {
                 Object val = extras.get(key);
                 if (val instanceof String) {
-                    appData.add(new AppData.Builder().key(key).value((String) val).build());
+                    appData.add(new AppData.Builder().key(key).value_((String) val).build());
                 }
             }
         }
@@ -545,7 +545,7 @@ public class McsService extends Service implements Handler.Callback {
                 .resource(Long.toString(info.getAndroidId()))
                 .user(Long.toString(info.getAndroidId()))
                 .use_rmq2(true)
-                .setting(Collections.singletonList(new Setting.Builder().name("new_vc").value("1").build()))
+                .setting(Collections.singletonList(new Setting.Builder().name("new_vc").value_("1").build()))
                 .received_persistent_id(GcmPrefs.get(this).getLastPersistedIds())
                 .build();
     }
@@ -569,7 +569,7 @@ public class McsService extends Service implements Handler.Callback {
         }
         if (msg.token != null) intent.putExtra(EXTRA_COLLAPSE_KEY, msg.token);
         for (AppData appData : msg.app_data) {
-            intent.putExtra(appData.key, appData.value);
+            intent.putExtra(appData.key, appData.value_);
         }
 
         String receiverPermission = null;
@@ -591,7 +591,7 @@ public class McsService extends Service implements Handler.Callback {
             sendOrderedBroadcast(intent, null);
         } else {
             List<ResolveInfo> infos = getPackageManager().queryBroadcastReceivers(intent, PackageManager.GET_RESOLVED_FILTER);
-            if (infos == null || infos.isEmpty()) {
+            if (infos.isEmpty()) {
                 logd(this, "No target for message, wut?");
             } else {
                 for (ResolveInfo resolveInfo : infos) {
@@ -622,7 +622,7 @@ public class McsService extends Service implements Handler.Callback {
             } catch (Exception e) {
                 Log.e(TAG, "Error adding app" + packageName + " to the temp allowlist.", e);
             }
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        } else {
             try {
                 if (getUserIdMethod != null && addPowerSaveTempWhitelistAppMethod != null && deviceIdleController != null) {
                     int userId = (int) getUserIdMethod.invoke(null, getPackageManager().getApplicationInfo(packageName, 0).uid);
@@ -644,7 +644,7 @@ public class McsService extends Service implements Handler.Callback {
                         .sent(System.currentTimeMillis() / 1000)
                         .ttl(0)
                         .category(SELF_CATEGORY)
-                        .app_data(Collections.singletonList(new AppData.Builder().key(IDLE_NOTIFICATION).value("false").build()));
+                        .app_data(Collections.singletonList(new AppData.Builder().key(IDLE_NOTIFICATION).value_("false").build()));
                 if (inputStream.newStreamIdAvailable()) {
                     msgResponse.last_stream_id_received(inputStream.getStreamId());
                 }
@@ -657,12 +657,12 @@ public class McsService extends Service implements Handler.Callback {
         rootHandler.sendMessage(rootHandler.obtainMessage(MSG_OUTPUT, type, 0, message));
     }
 
-    private void sendOutputStream(int what, int arg, Object obj) {
+    private void sendOutputStream(int arg, Object obj) {
         McsOutputStream os = outputStream;
         if (os != null && os.isAlive()) {
             Handler outputHandler = os.getHandler();
             if (outputHandler != null)
-                outputHandler.sendMessage(outputHandler.obtainMessage(what, arg, 0, obj));
+                outputHandler.sendMessage(outputHandler.obtainMessage(McsConstants.MSG_OUTPUT, arg, 0, obj));
         }
     }
 
@@ -673,7 +673,7 @@ public class McsService extends Service implements Handler.Callback {
                 handleInput(msg.arg1, (Message) msg.obj);
                 return true;
             case MSG_OUTPUT:
-                sendOutputStream(MSG_OUTPUT, msg.arg1, msg.obj);
+                sendOutputStream(msg.arg1, msg.obj);
                 return true;
             case MSG_INPUT_ERROR:
             case MSG_OUTPUT_ERROR:
@@ -717,7 +717,7 @@ public class McsService extends Service implements Handler.Callback {
                     IqStanza.Builder iq = new IqStanza.Builder()
                             .type(IqStanza.IqType.SET)
                             .id("")
-                            .extension(new Extension.Builder().id(13).data(ByteString.EMPTY).build()) // StreamAck
+                            .extension(new Extension.Builder().id(13).data_(ByteString.EMPTY).build()) // StreamAck
                             .status(0L);
                     if (inputStream.newStreamIdAvailable()) {
                         iq.last_stream_id_received(inputStream.getStreamId());
