@@ -79,7 +79,7 @@ class PushNotificationPreferencesFragment : PreferenceFragmentCompat() {
                     getString(R.string.gcm_network_state_disconnected)
                 }
             }
-        } catch (e: Exception) {}
+        } catch (_: Exception) {}
     }
 
     private fun updateContent() {

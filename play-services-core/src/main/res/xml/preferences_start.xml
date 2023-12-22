@@ -23,7 +23,7 @@
             android:title="@string/pref_add_account_title">
             <intent
                 android:targetClass="org.microg.gms.auth.login.LoginActivity"
-                android:targetPackage="com.mgoogle.android.gms" />
+                android:targetPackage="@string/var_pref_start_gms_package" />
         </Preference>
         <Preference
             android:icon="@drawable/ic_device_login"
@@ -40,7 +40,7 @@
             app:isPreferenceVisible="false">
             <intent
                 android:targetClass="org.microg.gms.ui.GoogleMoreFragment$AsActivity"
-                android:targetPackage="com.mgoogle.android.gms" />
+                android:targetPackage="@string/var_pref_start_gms_package" />
         </Preference>
         <SwitchPreferenceCompat
             android:key="hideLauncherIcon"

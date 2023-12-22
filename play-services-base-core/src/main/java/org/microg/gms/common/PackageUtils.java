@@ -16,10 +16,10 @@
 
 package org.microg.gms.common;
 
-import static android.os.Build.VERSION.SDK_INT;
 import static org.microg.gms.common.Constants.GMS_PACKAGE_NAME;
 import static org.microg.gms.common.Constants.GMS_PACKAGE_SIGNATURE_SHA1;
 
+import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.app.Application;
 import android.app.PendingIntent;
@@ -32,6 +32,8 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
+import org.microg.gms.base.core.BuildConfig;
+
 import java.lang.reflect.Method;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -39,6 +41,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class PackageUtils {
 
@@ -46,15 +49,17 @@ public class PackageUtils {
     private static final String GOOGLE_LEGACY_KEY = "58e1c4133f7441ec3d2c270270a14802da47ba0e"; // Seems to be no longer used.
     private static final String[] GOOGLE_PRIMARY_KEYS = {GOOGLE_PLATFORM_KEY, "24bb24c05e47e0aefa68a58a766179d9b613a600", "afb0fed5eeaebdd86f56a97742f4b6b33ef59875", "61226bdb57cc32c8a2a9ef71f7bc9548e95dcc0b", "3a82b5ee26bc46bf68113d920e610cd090198d4a"};
 
-    private static final Map<String, String> KNOWN_GOOGLE_PACKAGES;
+    public static final Map<String, String> KNOWN_GOOGLE_PACKAGES;
 
     static {
         KNOWN_GOOGLE_PACKAGES = new HashMap<>();
+        KNOWN_GOOGLE_PACKAGES.put("com.google.android.apps.youtube", "24bb24c05e47e0aefa68a58a766179d9b613a600");
         KNOWN_GOOGLE_PACKAGES.put("com.google.android.apps.youtube.music", "afb0fed5eeaebdd86f56a97742f4b6b33ef59875");
     }
 
     public static boolean isGooglePackage(Context context, String packageName) {
         String signatureDigest = firstSignatureDigest(context, packageName);
+        packageName = PackageSpoofUtils.spoofPackageName(context.getPackageManager(), packageName);
         return isGooglePackage(packageName, signatureDigest);
     }
 
@@ -71,7 +76,7 @@ public class PackageUtils {
         if (signatureDigest == null) return false;
         if (Arrays.asList(GOOGLE_PRIMARY_KEYS).contains(signatureDigest)) return true;
         if (!KNOWN_GOOGLE_PACKAGES.containsKey(packageName)) return false;
-        return KNOWN_GOOGLE_PACKAGES.get(packageName).equals(signatureDigest);
+        return Objects.equals(KNOWN_GOOGLE_PACKAGES.get(packageName), signatureDigest);
     }
 
     public static void assertExtendedAccess(Context context) {
@@ -81,14 +86,14 @@ public class PackageUtils {
 
     public static boolean callerHasExtendedAccess(Context context) {
         String[] packagesForUid = context.getPackageManager().getPackagesForUid(Binder.getCallingUid());
-        if (packagesForUid != null && packagesForUid.length != 0) {
+        if (packagesForUid != null) {
             for (String packageName : packagesForUid) {
                 packageName = PackageSpoofUtils.spoofPackageName(context.getPackageManager(), packageName);
                 if (isGooglePackage(context, packageName) || GMS_PACKAGE_NAME.equals(packageName))
                     return true;
             }
         }
-        return context.checkCallingPermission("org.mgoogle.gms.EXTENDED_ACCESS") == PackageManager.PERMISSION_GRANTED;
+        return context.checkCallingPermission(BuildConfig.BASE_PACKAGE_NAME + ".gms.EXTENDED_ACCESS") == PackageManager.PERMISSION_GRANTED;
     }
 
     public static void checkPackageUid(Context context, String packageName, int callingUid) {
@@ -118,9 +123,9 @@ public class PackageUtils {
         try {
             info = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNATURES);
         } catch (PackageManager.NameNotFoundException e) {
-            return null;
+            return KNOWN_GOOGLE_PACKAGES.get(packageName);
         }
-        if (info != null && info.signatures != null && info.signatures.length > 0) {
+        if (info != null && info.signatures != null) {
             for (Signature sig : info.signatures) {
                 String digest = sha1sum(sig.toByteArray());
                 if (digest != null) {
@@ -145,7 +150,7 @@ public class PackageUtils {
         } catch (PackageManager.NameNotFoundException e) {
             return null;
         }
-        if (info != null && info.signatures != null && info.signatures.length > 0) {
+        if (info != null && info.signatures != null) {
             for (Signature sig : info.signatures) {
                 byte[] digest = sha1bytes(sig.toByteArray());
                 if (digest != null) {
@@ -176,10 +181,7 @@ public class PackageUtils {
         } catch (final NoSuchAlgorithmException e) {
             return null;
         }
-        if (md != null) {
-            return md.digest(bytes);
-        }
-        return null;
+        return md.digest(bytes);
     }
 
     @Nullable
@@ -250,7 +252,6 @@ public class PackageUtils {
     }
 
     @Nullable
-    @Deprecated
     public static String packageFromProcessId(Context context, int pid) {
         ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         if (manager == null) return null;
@@ -275,22 +276,19 @@ public class PackageUtils {
         return null;
     }
 
-    @SuppressWarnings("deprecation")
     public static String packageFromPendingIntent(PendingIntent pi) {
         if (pi == null) return null;
-        if (SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            return pi.getTargetPackage();
-        } else {
-            return pi.getCreatorPackage();
-        }
+        return pi.getCreatorPackage();
     }
 
     public static String getProcessName() {
         if (android.os.Build.VERSION.SDK_INT >= 28)
             return Application.getProcessName();
         try {
+            @SuppressLint("PrivateApi")
             Class<?> activityThread = Class.forName("android.app.ActivityThread");
-            String methodName = android.os.Build.VERSION.SDK_INT >= 18 ? "currentProcessName" : "currentPackageName";
+            String methodName = "currentProcessName";
+            @SuppressLint("DiscouragedPrivateApi")
             Method getProcessName = activityThread.getDeclaredMethod(methodName);
             return (String) getProcessName.invoke(null);
         } catch (Exception e) {
@@ -335,17 +333,12 @@ public class PackageUtils {
         } catch (final NoSuchAlgorithmException e) {
             return null;
         }
-        if (md != null) {
-            bytes = md.digest(bytes);
-            if (bytes != null) {
-                StringBuilder sb = new StringBuilder(2 * bytes.length);
-                for (byte b : bytes) {
-                    sb.append(String.format("%02x", b));
-                }
-                return sb.toString();
-            }
+        bytes = md.digest(bytes);
+        StringBuilder sb = new StringBuilder(2 * bytes.length);
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
         }
-        return null;
+        return sb.toString();
     }
 
     public static int versionCode(Context context, String packageName) {
