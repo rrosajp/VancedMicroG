@@ -24,7 +24,6 @@ object Build {
     var CPU_ABI2: String? = null
 
     @JvmField
-    @TargetApi(21)
     var SUPPORTED_ABIS: Array<String> = emptyArray()
 
     @JvmField
@@ -90,6 +89,9 @@ object Build {
 
         @JvmField
         var SECURITY_PATCH: String? = null
+
+        @JvmField
+        var DEVICE_INITIAL_SDK_INT: Int = 0
     }
 
     fun generateWebViewUserAgentString(original: String): String {
