@@ -44,12 +44,12 @@ fun NavController.navigate(context: Context, @IdRes resId: Int, args: Bundle? = 
 @RequiresApi(Build.VERSION_CODES.M)
 fun Context.hideIcon(hide: Boolean) {
     packageManager.setComponentEnabledSetting(
-            ComponentName.createRelative(this, "org.microg.gms.ui.SettingsActivityLauncher"),
-            when (hide) {
-                true -> PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-                false -> PackageManager.COMPONENT_ENABLED_STATE_ENABLED
-            },
-            PackageManager.DONT_KILL_APP
+        ComponentName.createRelative(this, "org.microg.gms.ui.SettingsActivityLauncher"),
+        when (hide) {
+            true -> PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            false -> PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+        },
+        PackageManager.DONT_KILL_APP
     )
 }
 
