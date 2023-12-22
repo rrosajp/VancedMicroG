@@ -24,12 +24,12 @@ class TextPreference : Preference {
 
     override fun onBindViewHolder(holder: PreferenceViewHolder) {
         super.onBindViewHolder(holder)
-        val iconFrame = holder?.findViewById(androidx.preference.R.id.icon_frame)
+        val iconFrame = holder.findViewById(androidx.preference.R.id.icon_frame)
         iconFrame?.layoutParams?.height = MATCH_PARENT
         (iconFrame as? LinearLayout)?.gravity = Gravity.TOP or Gravity.START
         val pad = (context.resources.displayMetrics.densityDpi/160f * 20).toInt()
         iconFrame?.setPadding(0, pad, 0, pad)
-        val textView = holder?.findViewById(android.R.id.summary) as? TextView
+        val textView = holder.findViewById(android.R.id.summary) as? TextView
         textView?.maxLines = Int.MAX_VALUE
     }
 }

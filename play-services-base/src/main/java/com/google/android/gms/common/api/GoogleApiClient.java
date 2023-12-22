@@ -143,7 +143,7 @@ public interface GoogleApiClient {
      * @see #registerConnectionFailedListener(OnConnectionFailedListener)
      * @see #unregisterConnectionFailedListener(OnConnectionFailedListener)
      */
-    boolean isConnectionFailedListenerRegistered(OnConnectionFailedListener listener);
+    public boolean isConnectionFailedListenerRegistered(OnConnectionFailedListener listener);
 
     /**
      * Closes the current connection to Google Play services and creates a new connection.
@@ -198,7 +198,7 @@ public interface GoogleApiClient {
      * @param listener the listener where the results of the asynchronous {@link #connect()} call
      *                 are delivered.
      */
-    void registerConnectionFailedListener(OnConnectionFailedListener listener);
+    public void registerConnectionFailedListener(OnConnectionFailedListener listener);
 
     /**
      * Disconnects the client and stops automatic lifecycle management. Use this before creating a
@@ -241,10 +241,10 @@ public interface GoogleApiClient {
     @PublicApi
     class Builder {
         private final Context context;
-        private final Map<Api, Api.ApiOptions> apis = new HashMap<>();
-        private final Set<ConnectionCallbacks> connectionCallbacks = new HashSet<>();
-        private final Set<OnConnectionFailedListener> connectionFailedListeners = new HashSet<>();
-        private final Set<String> scopes = new HashSet<>();
+        private final Map<Api, Api.ApiOptions> apis = new HashMap<Api, Api.ApiOptions>();
+        private final Set<ConnectionCallbacks> connectionCallbacks = new HashSet<ConnectionCallbacks>();
+        private final Set<OnConnectionFailedListener> connectionFailedListeners = new HashSet<OnConnectionFailedListener>();
+        private final Set<String> scopes = new HashSet<String>();
         private String accountName;
         private int clientId = -1;
         private FragmentActivity fragmentActivity;
@@ -364,7 +364,12 @@ public interface GoogleApiClient {
         }
 
         private ApiClientSettings getClientSettings() {
-            return null;
+            ApiClientSettings clientSettings = new ApiClientSettings();
+            clientSettings.accountName = accountName;
+            clientSettings.scopes = new HashSet<>(scopes);
+            clientSettings.gravityForPopups = gravityForPopups;
+            clientSettings.viewForPopups = viewForPopups;
+            return clientSettings;
         }
 
         public Builder enableAutoManage(FragmentActivity fragmentActivity, int cliendId,
@@ -444,6 +449,8 @@ public interface GoogleApiClient {
          * A suspension cause informing you that a peer device connection was lost.
          */
         int CAUSE_NETWORK_LOST = 2;
+
+        void onConnected(Bundle connectionHint);
     }
 
     /**

@@ -253,8 +253,6 @@ public class GoogleApiAvailability {
      * @param cancelListener The {@link DialogInterface.OnCancelListener} to invoke if the dialog is canceled.
      * @return true if the dialog is shown, false otherwise
      * @throws RuntimeException if API level is below 11 and activity is not a {@link FragmentActivity}.
-     * @see ErrorDialogFragment
-     * @see SupportErrorDialogFragmet
      */
     public boolean showErrorDialogFragment(Activity activity, int errorCode, int requestCode, DialogInterface.OnCancelListener cancelListener) {
         Dialog dialog = getErrorDialog(activity, errorCode, requestCode, cancelListener);

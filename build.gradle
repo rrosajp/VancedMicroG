@@ -4,6 +4,8 @@
  */
 
 buildscript {
+    ext.safeParcelVersion = '1.7.1'
+
     ext.kotlinVersion = '1.7.21'
     ext.coroutineVersion = '1.6.4'
 
@@ -65,5 +67,14 @@ subprojects {
     repositories {
         mavenCentral()
         google()
+    }
+    afterEvaluate {
+        // Temporary hack for Android Studio
+        if (project.plugins.hasPlugin('com.android.base')) {
+            dependencies {
+                compileOnly "org.microg:safe-parcel:$safeParcelVersion"
+                testCompileOnly "org.microg:safe-parcel:$safeParcelVersion"
+            }
+        }
     }
 }
