@@ -1,5 +1,8 @@
 package org.microg.gms.common;
 
+import static android.os.Build.VERSION.SDK_INT;
+
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -10,12 +13,10 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.os.PowerManager;
 import android.provider.Settings;
 import android.util.Log;
 
-import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 
 import org.microg.gms.base.core.R;
@@ -30,11 +31,10 @@ public class ForegroundServiceContext extends ContextWrapper {
 
     @Override
     public ComponentName startService(Intent service) {
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-                && !isIgnoringBatteryOptimizations()) {
+        if (!isIgnoringBatteryOptimizations()) {
             Log.d(TAG, "Starting in foreground mode.");
             service.putExtra(EXTRA_FOREGROUND, true);
-            if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (SDK_INT >= 26) {
                 return super.startForegroundService(service);
             } else {
                 return super.startService(service);
@@ -43,7 +43,6 @@ public class ForegroundServiceContext extends ContextWrapper {
         return super.startService(service);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
     private boolean isIgnoringBatteryOptimizations() {
         PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         return powerManager.isIgnoringBatteryOptimizations(getPackageName());
@@ -73,13 +72,11 @@ public class ForegroundServiceContext extends ContextWrapper {
     }
 
     public static void completeForegroundService(Service service, Intent intent, String tag) {
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-                && intent != null
-                && intent.getBooleanExtra(EXTRA_FOREGROUND, false)) {
+        if (intent != null && intent.getBooleanExtra(EXTRA_FOREGROUND, false)) {
             String serviceName = getServiceName(service);
             Log.d(tag, "Started " + serviceName + " in foreground mode.");
             try {
-                Notification notification = buildForegroundNotification(service, serviceName);
+                Notification notification = buildForegroundNotification(service);
                 service.startForeground(serviceName.hashCode(), notification);
                 Log.d(tag, "Notification: " + notification);
             } catch (Exception e) {
@@ -88,9 +85,10 @@ public class ForegroundServiceContext extends ContextWrapper {
         }
     }
 
-    private static Notification buildForegroundNotification(Context context, String serviceName) {
+    @SuppressLint("BatteryLife")
+    private static Notification buildForegroundNotification(Context context) {
         Intent notificationIntent = new Intent();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (SDK_INT >= 31) {
             notificationIntent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
             notificationIntent.setData(Uri.parse("package:" + context.getPackageName()));
         } else {
@@ -100,8 +98,8 @@ public class ForegroundServiceContext extends ContextWrapper {
         PendingIntent notificationPendingIntent = PendingIntent.getActivity(context,
                 0,
                 notificationIntent,
-                0);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                PendingIntent.FLAG_IMMUTABLE);
+        if (SDK_INT >= 26) {
             NotificationChannel Channel = new NotificationChannel("foreground-service",
                     context.getResources().getString(R.string.notification_service_name),
                     NotificationManager.IMPORTANCE_LOW);

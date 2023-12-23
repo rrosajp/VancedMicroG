@@ -17,6 +17,7 @@
 package org.microg.gms.auth;
 
 import static android.accounts.AccountManager.VISIBILITY_VISIBLE;
+import static android.os.Build.VERSION.SDK_INT;
 
 import android.Manifest;
 import android.accounts.Account;
@@ -27,7 +28,6 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Binder;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -36,6 +36,7 @@ import androidx.annotation.Nullable;
 import org.microg.gms.common.PackageUtils;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 import static org.microg.gms.auth.AuthConstants.DEFAULT_ACCOUNT_TYPE;
 import static org.microg.gms.auth.AuthConstants.PROVIDER_EXTRA_ACCOUNTS;
@@ -54,13 +55,10 @@ public class AccountContentProvider extends ContentProvider {
     @Nullable
     @Override
     public Bundle call(String method, String arg, Bundle extras) {
-        String suggestedPackageName = null;
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
-            suggestedPackageName = getCallingPackage();
-        }
+        String suggestedPackageName = getCallingPackage();
         String packageName = PackageUtils.getAndCheckCallingPackage(getContext(), suggestedPackageName);
         Log.d(TAG, "Call " + method + " from " + packageName + " with arg " + arg);
-        if (!PackageUtils.callerHasExtendedAccess(getContext())) {
+        if (!PackageUtils.callerHasExtendedAccess(Objects.requireNonNull(getContext()))) {
             String[] packagesForUid = getContext().getPackageManager().getPackagesForUid(Binder.getCallingUid());
             if (packagesForUid != null && packagesForUid.length != 0)
                 Log.w(TAG, "Not granting extended access to " + Arrays.toString(packagesForUid)
@@ -73,13 +71,11 @@ public class AccountContentProvider extends ContentProvider {
             Account[] accounts = null;
             if (arg != null && (arg.equals(DEFAULT_ACCOUNT_TYPE) || arg.startsWith(DEFAULT_ACCOUNT_TYPE + "."))) {
                 AccountManager am = AccountManager.get(getContext());
-                if (Build.VERSION.SDK_INT >= 18) {
-                    accounts = am.getAccountsByTypeForPackage(arg, packageName);
-                }
-                if (accounts == null || accounts.length == 0) {
+                accounts = am.getAccountsByTypeForPackage(arg, packageName);
+                if (accounts.length == 0) {
                     accounts = am.getAccountsByType(arg);
                 }
-                if (Build.VERSION.SDK_INT >= 26 && accounts != null && arg.equals(DEFAULT_ACCOUNT_TYPE)) {
+                if (SDK_INT >= 26 && arg.equals(DEFAULT_ACCOUNT_TYPE)) {
                     for (Account account : accounts) {
                         if (am.getAccountVisibility(account, packageName) == AccountManager.VISIBILITY_UNDEFINED) {
                             Log.d(TAG, "Make account " + account + " visible to " + packageName);

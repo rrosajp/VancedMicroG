@@ -152,31 +152,9 @@ public class DataHolder extends AutoSafeParcelable implements Closeable {
         return empty(statusCode, null);
     }
 
-    @SuppressWarnings("deprecation")
     @SuppressLint({"NewApi", "ObsoleteSdkInt"})
     static int getCursorType(Cursor cursor, int i) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            return cursor.getType(i);
-        }
-        if (cursor instanceof AbstractWindowedCursor) {
-            CursorWindow cursorWindow = ((AbstractWindowedCursor) cursor).getWindow();
-            int pos = cursor.getPosition();
-            int type = -1;
-            if (cursorWindow.isNull(pos, i)) {
-                type = FIELD_TYPE_NULL;
-            } else if (cursorWindow.isLong(pos, i)) {
-                type = FIELD_TYPE_INTEGER;
-            } else if (cursorWindow.isFloat(pos, i)) {
-                type = FIELD_TYPE_FLOAT;
-            } else if (cursorWindow.isString(pos, i)) {
-                type = FIELD_TYPE_STRING;
-            } else if (cursorWindow.isBlob(pos, i)) {
-                type = FIELD_TYPE_BLOB;
-            }
-
-            return type;
-        }
-        throw new RuntimeException("Unsupported cursor on this platform!");
+        return cursor.getType(i);
     }
 
     /**

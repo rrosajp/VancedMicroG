@@ -26,6 +26,8 @@ import android.opengl.GLES10;
 import android.os.Build;
 import android.util.DisplayMetrics;
 
+import org.microg.gms.profile.ProfileManager;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,6 +58,7 @@ public class DeviceConfiguration {
     public int widthPixels;
 
     public DeviceConfiguration(Context context) {
+        ProfileManager.ensureInitialized(context);
         ConfigurationInfo configurationInfo = ((ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE)).getDeviceConfigurationInfo();
         touchScreen = configurationInfo.reqTouchScreen;
         keyboardType = configurationInfo.reqKeyboardType;
@@ -78,10 +81,10 @@ public class DeviceConfiguration {
         }
         Collections.sort(sharedLibraries);
         availableFeatures = new ArrayList<>();
-        if (packageManager.getSystemAvailableFeatures() != null) {
-            for (FeatureInfo featureInfo : packageManager.getSystemAvailableFeatures()) {
-                if (featureInfo != null && featureInfo.name != null) availableFeatures.add(featureInfo.name);
-            }
+        packageManager.getSystemAvailableFeatures();
+        for (FeatureInfo featureInfo : packageManager.getSystemAvailableFeatures()) {
+            if (featureInfo != null && featureInfo.name != null)
+                availableFeatures.add(featureInfo.name);
         }
         Collections.sort(availableFeatures);
         this.nativePlatforms = getNativePlatforms();
@@ -98,18 +101,9 @@ public class DeviceConfiguration {
         Collections.sort(this.glExtensions);
     }
 
-    @SuppressWarnings({"deprecation", "InlinedApi"})
+    @SuppressWarnings({"InlinedApi"})
     private static List<String> getNativePlatforms() {
-        List<String> nativePlatforms;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            return Arrays.asList(Build.SUPPORTED_ABIS);
-        } else {
-            nativePlatforms = new ArrayList<>();
-            nativePlatforms.add(Build.CPU_ABI);
-            if (Build.CPU_ABI2 != null && !Build.CPU_ABI2.equals("unknown"))
-                nativePlatforms.add(Build.CPU_ABI2);
-            return nativePlatforms;
-        }
+        return Arrays.asList(Build.SUPPORTED_ABIS);
     }
 
     private static void addEglExtensions(Set<String> glExtensions) {

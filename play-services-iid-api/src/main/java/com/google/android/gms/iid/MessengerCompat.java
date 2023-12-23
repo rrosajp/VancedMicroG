@@ -16,9 +16,6 @@
 
 package com.google.android.gms.iid;
 
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.LOLLIPOP;
-
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
@@ -33,19 +30,11 @@ public class MessengerCompat implements Parcelable {
     private IMessengerCompat messengerCompat;
 
     public MessengerCompat(IBinder binder) {
-        if (SDK_INT >= LOLLIPOP) {
-            messenger = new Messenger(binder);
-        } else {
-            messengerCompat = IMessengerCompat.Stub.asInterface(binder);
-        }
+        messenger = new Messenger(binder);
     }
 
     public MessengerCompat(Handler handler) {
-        if (SDK_INT >= LOLLIPOP) {
-            messenger = new Messenger(handler);
-        } else {
-            messengerCompat = new IMessengerCompatImpl(handler);
-        }
+        messenger = new Messenger(handler);
     }
 
     @Override

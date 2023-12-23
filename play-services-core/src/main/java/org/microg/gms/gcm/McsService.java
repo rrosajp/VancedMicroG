@@ -19,8 +19,42 @@ package org.microg.gms.gcm;
 import static android.app.AlarmManager.ELAPSED_REALTIME_WAKEUP;
 import static android.os.Build.VERSION.SDK_INT;
 import static org.microg.gms.common.PackageUtils.warnIfNotPersistentProcess;
-import static org.microg.gms.gcm.GcmConstants.*;
-import static org.microg.gms.gcm.McsConstants.*;
+import static org.microg.gms.gcm.GcmConstants.ACTION_C2DM_RECEIVE;
+import static org.microg.gms.gcm.GcmConstants.EXTRA_APP;
+import static org.microg.gms.gcm.GcmConstants.EXTRA_APP_OVERRIDE;
+import static org.microg.gms.gcm.GcmConstants.EXTRA_COLLAPSE_KEY;
+import static org.microg.gms.gcm.GcmConstants.EXTRA_FROM;
+import static org.microg.gms.gcm.GcmConstants.EXTRA_MESSAGE_ID;
+import static org.microg.gms.gcm.GcmConstants.EXTRA_MESSENGER;
+import static org.microg.gms.gcm.GcmConstants.EXTRA_RAWDATA;
+import static org.microg.gms.gcm.GcmConstants.EXTRA_RAWDATA_BASE64;
+import static org.microg.gms.gcm.GcmConstants.EXTRA_REGISTRATION_ID;
+import static org.microg.gms.gcm.GcmConstants.EXTRA_SEND_FROM;
+import static org.microg.gms.gcm.GcmConstants.EXTRA_SEND_TO;
+import static org.microg.gms.gcm.GcmConstants.EXTRA_TTL;
+import static org.microg.gms.gcm.McsConstants.ACTION_ACK;
+import static org.microg.gms.gcm.McsConstants.ACTION_CONNECT;
+import static org.microg.gms.gcm.McsConstants.ACTION_HEARTBEAT;
+import static org.microg.gms.gcm.McsConstants.ACTION_RECONNECT;
+import static org.microg.gms.gcm.McsConstants.ACTION_SEND;
+import static org.microg.gms.gcm.McsConstants.EXTRA_REASON;
+import static org.microg.gms.gcm.McsConstants.MCS_CLOSE_TAG;
+import static org.microg.gms.gcm.McsConstants.MCS_DATA_MESSAGE_STANZA_TAG;
+import static org.microg.gms.gcm.McsConstants.MCS_HEARTBEAT_ACK_TAG;
+import static org.microg.gms.gcm.McsConstants.MCS_HEARTBEAT_PING_TAG;
+import static org.microg.gms.gcm.McsConstants.MCS_IQ_STANZA_TAG;
+import static org.microg.gms.gcm.McsConstants.MCS_LOGIN_REQUEST_TAG;
+import static org.microg.gms.gcm.McsConstants.MCS_LOGIN_RESPONSE_TAG;
+import static org.microg.gms.gcm.McsConstants.MSG_ACK;
+import static org.microg.gms.gcm.McsConstants.MSG_CONNECT;
+import static org.microg.gms.gcm.McsConstants.MSG_HEARTBEAT;
+import static org.microg.gms.gcm.McsConstants.MSG_INPUT;
+import static org.microg.gms.gcm.McsConstants.MSG_INPUT_ERROR;
+import static org.microg.gms.gcm.McsConstants.MSG_OUTPUT;
+import static org.microg.gms.gcm.McsConstants.MSG_OUTPUT_DONE;
+import static org.microg.gms.gcm.McsConstants.MSG_OUTPUT_ERROR;
+import static org.microg.gms.gcm.McsConstants.MSG_OUTPUT_READY;
+import static org.microg.gms.gcm.McsConstants.MSG_TEARDOWN;
 
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
@@ -34,7 +68,6 @@ import android.content.pm.PermissionInfo;
 import android.content.pm.ResolveInfo;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -68,7 +101,6 @@ import org.microg.gms.gcm.mcs.IqStanza;
 import org.microg.gms.gcm.mcs.LoginRequest;
 import org.microg.gms.gcm.mcs.LoginResponse;
 import org.microg.gms.gcm.mcs.Setting;
-import org.microg.mgms.settings.SettingsProvider;
 
 import java.io.Closeable;
 import java.lang.reflect.Field;
@@ -78,6 +110,7 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.net.ssl.SSLContext;
@@ -138,10 +171,10 @@ public class McsService extends Service implements Handler.Callback {
     @Nullable
     private Method addPowerSaveTempWhitelistAppMethod;
     @Nullable
-    @RequiresApi(Build.VERSION_CODES.S)
+    @RequiresApi(31)
     private Object powerExemptionManager;
     @Nullable
-    @RequiresApi(Build.VERSION_CODES.S)
+    @RequiresApi(31)
     private Method addToTemporaryAllowListMethod;
 
     private class HandlerThread extends Thread {
@@ -156,7 +189,7 @@ public class McsService extends Service implements Handler.Callback {
             wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "mcs");
             wakeLock.setReferenceCounted(false);
             synchronized (McsService.class) {
-                rootHandler = new Handler(Looper.myLooper(), McsService.this);
+                rootHandler = new Handler(Objects.requireNonNull(Looper.myLooper()), McsService.this);
                 if (connectIntent != null) {
                     rootHandler.sendMessage(rootHandler.obtainMessage(MSG_CONNECT, connectIntent));
                     WakefulBroadcastReceiver.completeWakefulIntent(connectIntent);
@@ -179,9 +212,9 @@ public class McsService extends Service implements Handler.Callback {
         heartbeatIntent = PendingIntent.getService(this, 0, new Intent(ACTION_HEARTBEAT, null, this, McsService.class), 0);
         alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
         powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission("android.permission.CHANGE_DEVICE_IDLE_TEMP_WHITELIST") == PackageManager.PERMISSION_GRANTED) {
+        if (checkSelfPermission("android.permission.CHANGE_DEVICE_IDLE_TEMP_WHITELIST") == PackageManager.PERMISSION_GRANTED) {
             try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (SDK_INT >= 31) {
                     Class<?> powerExemptionManagerClass = Class.forName("android.os.PowerExemptionManager");
                     powerExemptionManager = getSystemService(powerExemptionManagerClass);
                     addToTemporaryAllowListMethod =
@@ -268,11 +301,7 @@ public class McsService extends Service implements Handler.Callback {
         long delay = getCurrentDelay();
         logd(context, "Scheduling reconnect in " + delay / 1000 + " seconds...");
         PendingIntent pi = PendingIntent.getBroadcast(context, 1, new Intent(ACTION_RECONNECT, null, context, TriggerReceiver.class), 0);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            alarmManager.setExactAndAllowWhileIdle(ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + delay, pi);
-        } else {
-            alarmManager.set(ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + delay, pi);
-        }
+        alarmManager.setExactAndAllowWhileIdle(ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + delay, pi);
     }
 
     public void scheduleHeartbeat(Context context) {
@@ -283,18 +312,7 @@ public class McsService extends Service implements Handler.Callback {
             closeAll();
         }
         logd(context, "Scheduling heartbeat in " + heartbeatMs / 1000 + " seconds...");
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            // This is supposed to work even when running in idle and without battery optimization disabled
-            alarmManager.setExactAndAllowWhileIdle(ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + heartbeatMs, heartbeatIntent);
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            // With KitKat, the alarms become inexact by default, but with the newly available setWindow we can get inexact alarms with guarantees.
-            // Schedule the alarm to fire within the interval [heartbeatMs/3*4, heartbeatMs]
-            alarmManager.setWindow(ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + heartbeatMs / 4 * 3, heartbeatMs / 4,
-                    heartbeatIntent);
-        } else {
-            alarmManager.set(ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + heartbeatMs, heartbeatIntent);
-        }
-
+        alarmManager.setExactAndAllowWhileIdle(ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + heartbeatMs, heartbeatIntent);
     }
 
     public synchronized static long getCurrentDelay() {
@@ -616,7 +634,7 @@ public class McsService extends Service implements Handler.Callback {
     }
 
     private void addPowerSaveTempWhitelistApp(String packageName) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (SDK_INT >= 31) {
             try {
                 if (addToTemporaryAllowListMethod != null && powerExemptionManager != null) {
                     logd(this, "Adding app " + packageName + " to the temp allowlist");
