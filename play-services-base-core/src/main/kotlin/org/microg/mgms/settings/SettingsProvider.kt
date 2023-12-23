@@ -28,9 +28,6 @@ import java.io.File
  * because it provides safe access from different processes which normal [SharedPreferences] don't.
  */
 class SettingsProvider : ContentProvider() {
-    companion object {
-        const val INTERVAL = 1 * 60 * 1000 // 1 minute
-    }
 
     private val preferences: SharedPreferences by lazy {
         PreferenceManager.getDefaultSharedPreferences(context)
@@ -165,9 +162,9 @@ class SettingsProvider : ContentProvider() {
             Gcm.NETWORK_ROAMING -> Integer.parseInt(preferences.getString(key, "0") ?: "0")
             Gcm.NETWORK_OTHER -> Integer.parseInt(preferences.getString(key, "0") ?: "0")
 
-            Gcm.LEARNT_MOBILE -> preferences.getInt(key, Companion.INTERVAL)
-            Gcm.LEARNT_WIFI -> preferences.getInt(key, Companion.INTERVAL)
-            Gcm.LEARNT_OTHER -> preferences.getInt(key, Companion.INTERVAL)
+            Gcm.LEARNT_MOBILE -> preferences.getInt(key, 300000)
+            Gcm.LEARNT_WIFI -> preferences.getInt(key, 300000)
+            Gcm.LEARNT_OTHER -> preferences.getInt(key, 300000)
 
             else -> throw IllegalArgumentException("Unknown key: $key")
         }
