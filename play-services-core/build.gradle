@@ -98,7 +98,7 @@ android {
     }
 
     lintOptions {
-        disable 'MissingTranslation', 'BatteryLife', 'ImpliedQuantity', 'MissingQuantity', 'InvalidWakeLockTag', 'Range'
+        disable 'MissingTranslation', 'GetLocales', 'BatteryLife', 'ImpliedQuantity', 'MissingQuantity', 'InvalidWakeLockTag', 'Range'
     }
 
     buildTypes {
