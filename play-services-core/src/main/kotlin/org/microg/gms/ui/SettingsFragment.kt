@@ -8,21 +8,25 @@
 package org.microg.gms.ui
 
 import android.content.ComponentName
-import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Log
 import androidx.preference.Preference
+import androidx.preference.PreferenceCategory
 import androidx.preference.SwitchPreferenceCompat
 import com.mgoogle.android.gms.R
 import org.microg.gms.checkin.CheckinPrefs
 import org.microg.gms.gcm.GcmDatabase
-import org.microg.gms.gcm.getGcmServiceInfo
-import org.microg.mgms.settings.SettingsContract
+import org.microg.gms.gcm.GcmPrefs
+import org.microg.gms.settings.SettingsContract
+import org.microg.gms.ui.settings.SettingsProvider
+import org.microg.gms.ui.settings.getAllSettingsProviders
 import org.microg.tools.ui.ResourceSettingsFragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 
 class SettingsFragment : ResourceSettingsFragment() {
+    private val createdPreferences = mutableListOf<Preference>()
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         super.onCreatePreferences(savedInstanceState, rootKey)
@@ -48,19 +52,51 @@ class SettingsFragment : ResourceSettingsFragment() {
             }
 
         }
+
+        for (entry in getAllSettingsProviders(requireContext()).flatMap { it.getEntriesStatic(requireContext()) }) {
+            entry.createPreference()
+        }
+    }
+
+    private fun SettingsProvider.Companion.Entry.createPreference(): Preference? {
+        val preference = Preference(requireContext()).fillFromEntry(this)
+        try {
+            if (findPreference<PreferenceCategory>(when (group) {
+                    SettingsProvider.Companion.Group.HEADER -> "prefcat_header"
+                    SettingsProvider.Companion.Group.GOOGLE -> "prefcat_google_services"
+                    SettingsProvider.Companion.Group.OTHER -> "prefcat_other_services"
+                    SettingsProvider.Companion.Group.FOOTER -> "prefcat_footer"
+                })?.addPreference(preference) == true) {
+                createdPreferences.add(preference)
+                return preference
+            } else {
+                Log.w(TAG, "Preference not added $key")
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed adding preference $key", e)
+        }
+        return null
+    }
+
+    private fun Preference.fillFromEntry(entry: SettingsProvider.Companion.Entry): Preference {
+        key = entry.key
+        title = entry.title
+        summary = entry.summary
+        icon = entry.icon
+        isPersistent = false
+        isVisible = true
+        setOnPreferenceClickListener {
+            findNavController().navigate(requireContext(), entry.navigationId)
+            true
+        }
+        return this
     }
 
     override fun onResume() {
         super.onResume()
         val context = requireContext()
-        lifecycleScope.launchWhenResumed {
-            updateDetails(context)
-        }
-    }
 
-    private suspend fun updateDetails(context: Context) {
-        val gcmServiceInfo = getGcmServiceInfo(context)
-        if (gcmServiceInfo.configuration.enabled) {
+        if (GcmPrefs.get(requireContext()).isEnabled) {
             val database = GcmDatabase(context)
             val regCount = database.registrationList.size
             database.close()
@@ -70,6 +106,18 @@ class SettingsFragment : ResourceSettingsFragment() {
         }
 
         findPreference<Preference>(PREF_CHECKIN)?.setSummary(if (CheckinPrefs.isEnabled(context)) R.string.service_status_enabled_short else R.string.service_status_disabled_short)
+
+        lifecycleScope.launchWhenResumed {
+            val entries = getAllSettingsProviders(requireContext()).flatMap { it.getEntriesDynamic(requireContext()) }
+            for (preference in createdPreferences) {
+                if (!entries.any { it.key == preference.key }) preference.isVisible = false
+            }
+            for (entry in entries) {
+                val preference = createdPreferences.find { it.key == entry.key }
+                if (preference != null) preference.fillFromEntry(entry)
+                else entry.createPreference()
+            }
+        }
     }
 
     companion object {
