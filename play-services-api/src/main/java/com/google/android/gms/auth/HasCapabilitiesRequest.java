@@ -9,10 +9,10 @@ import android.accounts.Account;
 
 import org.microg.safeparcel.AutoSafeParcelable;
 
-public class HasCababilitiesRequest extends AutoSafeParcelable {
+public class HasCapabilitiesRequest extends AutoSafeParcelable {
     @Field(1)
     public Account account;
     @Field(2)
     public String[] capabilities;
-    public static final Creator<HasCababilitiesRequest> CREATOR = new AutoCreator<>(HasCababilitiesRequest.class);
+    public static final Creator<HasCapabilitiesRequest> CREATOR = new AutoCreator<>(HasCapabilitiesRequest.class);
 }
